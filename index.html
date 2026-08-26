@@ -1,0 +1,3478 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Репетитор — Журнал</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #FDF5F8;
+    --surface:   #FFFFFF;
+    --border:    #F2E3EB;
+    --blue:      #8A4866;
+    --indigo:    #BD5085;
+    --indigo-lt: #FBEEF4;
+    --amber:     #BC4D83;
+    --amber-lt:  #FCEFF6;
+    --green:     #7CC2A0;
+    --green-lt:  #EFF9F4;
+    --red:       #E08A8A;
+    --red-lt:    #FCF1F1;
+    --text:      #7A4A5C;
+    --muted:     #A0576E;
+    --radius:    14px;
+    --shadow:    0 2px 14px rgba(204,107,150,.08);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+  }
+  #loginScreen.hidden { display: none; }
+  .login-card {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(122,74,92,.15);
+    padding: 44px 40px;
+    width: 100%; max-width: 380px;
+    text-align: center;
+  }
+  .login-logo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800; font-size: 26px;
+    color: var(--blue); margin-bottom: 6px;
+  }
+  .login-logo span { color: var(--indigo); }
+  .login-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+  .login-label {
+    display: block; text-align: left;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .login-input {
+    width: 100%; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 11px 14px;
+    font-size: 15px; font-family: 'Inter', sans-serif;
+    outline: none; background: var(--bg); color: var(--text);
+    transition: border-color .15s; margin-bottom: 16px;
+  }
+  .login-input:focus { border-color: var(--indigo); }
+  .login-btn {
+    width: 100%; background: var(--indigo); color: #fff;
+    border: none; border-radius: 10px;
+    padding: 13px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: background .15s; margin-top: 4px;
+  }
+  .login-btn:hover { background: var(--blue); }
+  .login-error {
+    background: var(--red-lt); color: var(--red);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; font-weight: 600;
+    margin-bottom: 14px; display: none;
+  }
+  .login-error.show { display: block; }
+  .login-hint { font-size: 12px; color: var(--muted); margin-top: 20px; }
+
+  /* hide app until logged in */
+  #appRoot { display: none; }
+  #appRoot.visible { display: contents; }
+
+  /* ── TOP BAR ── */
+  header {
+    background: var(--blue);
+    padding: 0 32px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(122,74,92,.15);
+  }
+  .logo-row { display: flex; align-items: center; gap: 18px; }
+  .logo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: #fff;
+    letter-spacing: -.3px;
+  }
+  .logo span { color: #FFD6E8; }
+  .header-home-btn {
+    background: rgba(255,255,255,.14);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s;
+  }
+  .header-home-btn:hover { background: rgba(255,255,255,.24); }
+  .header-home-btn.nav-active { background: rgba(255,255,255,.28); box-shadow: 0 0 0 1.5px rgba(255,255,255,.5); }
+
+  /* ── SCHEDULE GRID ── */
+  .schedule-view { padding: 0; overflow: auto; height: 100%; }
+  .schedule-view > h2 { font-family: 'Montserrat', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 14px; padding-top: 4px; }
+  .schedule-grid-wrap { overflow: auto; border-radius: var(--radius); box-shadow: var(--shadow); background: var(--surface); max-height: calc(100vh - 200px); }
+  .schedule-grid { display: grid; grid-template-columns: 58px repeat(7, 1fr); min-width: 640px; }
+  .sg-corner, .sg-day-header { background: var(--blue); color: #fff; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; text-align: center; padding: 12px 6px; position: sticky; top: 0; z-index: 3; }
+  .sg-corner { z-index: 4; border-radius: var(--radius) 0 0 0; }
+  .sg-day-header:last-child { border-radius: 0 var(--radius) 0 0; }
+  .sg-day-header.today { background: var(--indigo); }
+  .sg-time { font-size: 11px; font-weight: 600; color: var(--muted); text-align: right; padding: 3px 8px 0 4px; position: sticky; left: 0; background: var(--surface); z-index: 2; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; white-space: nowrap; line-height: 1; }
+  .sg-time.hour-mark { font-weight: 700; color: var(--text); font-size: 12px; }
+  .sg-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 22px; height: 22px; position: relative; transition: background .1s; }
+  .sg-cell:last-child { border-right: none; }
+  .sg-cell.hour-mark { border-bottom-color: #e0ccd6; }
+  .sg-cell.today-col { background: #fdf5f8; }
+  .sg-lesson { position: absolute; inset: 1px 2px; border-radius: 6px; padding: 3px 6px 3px 4px; display: flex; align-items: center; gap: 5px; overflow: hidden; cursor: default; z-index: 1; transition: filter .12s; }
+  .sg-lesson:hover { filter: brightness(.93); }
+  .sg-lesson-name { font-size: 11px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; cursor: pointer; }
+  .sg-lesson-time { font-size: 10px; color: rgba(255,255,255,.8); white-space: nowrap; flex-shrink: 0; }
+
+  /* prep checkbox */
+  .sg-prep-check {
+    flex-shrink: 0;
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    border: 2px solid rgba(255,255,255,.6);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, border-color .15s;
+    position: relative;
+  }
+  .sg-prep-check.checked {
+    background: rgba(255,255,255,.9);
+    border-color: rgba(255,255,255,.9);
+  }
+  .sg-prep-check.checked::after {
+    content: '';
+    display: block;
+    width: 8px; height: 5px;
+    border-left: 2px solid #6B1437;
+    border-bottom: 2px solid #6B1437;
+    transform: rotate(-45deg) translate(1px, -1px);
+  }
+  .sg-prep-check:hover:not(.checked) { border-color: #fff; background: rgba(255,255,255,.2); }
+
+  /* prep reset button */
+  .prep-reset-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, color .15s;
+  }
+  .prep-reset-btn:hover { border-color: var(--red); color: var(--red); }
+  .schedule-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .header-date {
+    font-size: 13px;
+    color: rgba(255,255,255,.55);
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 62px);
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sidebar-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 8px 8px;
+  }
+  .student-card {
+    border-radius: var(--radius);
+    padding: 12px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background .15s, box-shadow .15s;
+    border: 1.5px solid transparent;
+  }
+  .student-card:hover { background: var(--indigo-lt); }
+  .student-card.active {
+    background: var(--indigo-lt);
+    border-color: var(--indigo);
+  }
+  .avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    color: var(--text);
+  }
+  .student-info { flex: 1; min-width: 0; }
+  .student-name {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .student-subject {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+  /* ring */
+  .ring-wrap { flex-shrink: 0; }
+  .ring-wrap svg { display: block; }
+
+  .btn-add-student {
+    margin-top: 8px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    background: none;
+    padding: 10px;
+    color: var(--indigo);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+  }
+  .btn-add-student:hover { background: var(--indigo-lt); border-color: var(--indigo); }
+
+  /* ── MAIN ── */
+  main {
+    padding: 32px 36px;
+    overflow: auto;
+  }
+  .student-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .student-header-info { flex: 1; min-width: 160px; }
+  .student-header-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; margin-left: auto; }
+  .student-header .avatar { width: 54px; height: 54px; font-size: 20px; flex-shrink: 0; }
+  .student-header h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+  }
+  .student-header .subject-badge {
+    display: inline-block;
+    background: var(--indigo-lt);
+    color: var(--indigo);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    margin-top: 4px;
+  }
+
+  /* SCHEDULE BLOCK in student header */
+  .schedule-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #FDF0F6 0%, #F7E8F5 100%);
+    border: 1.5px solid #EAC9E0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    min-width: 210px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .schedule-icon { font-size: 20px; flex-shrink: 0; }
+  .schedule-body { flex: 1; min-width: 0; }
+  .schedule-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+  .schedule-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--indigo);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .schedule-empty {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+  }
+  .schedule-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    padding: 2px 4px;
+    border-radius: 5px;
+    transition: color .15s, background .15s;
+    flex-shrink: 0;
+  }
+  .schedule-edit-btn:hover { color: var(--indigo); background: var(--indigo-lt); }
+
+  /* inline schedule editor */
+  .schedule-editor {
+    background: var(--surface);
+    border: 1.5px solid var(--indigo);
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.12);
+    margin-top: 8px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .schedule-editor.open { display: block; }
+  .schedule-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .schedule-days {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .day-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .12s, border-color .12s, color .12s;
+  }
+  .day-btn.selected {
+    background: var(--indigo);
+    border-color: var(--indigo);
+    color: #fff;
+  }
+  .slot-time-input {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    width: 110px;
+  }
+  .slot-time-input:focus { border-color: var(--indigo); }
+  .slot-remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    transition: color .12s, background .12s;
+    line-height: 1;
+  }
+  .slot-remove-btn:hover { color: var(--red); background: var(--red-lt); }
+  .btn-add-slot {
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--indigo);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color .12s, background .12s;
+    margin-top: 4px;
+  }
+  .btn-add-slot:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .btn-edit-student {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-edit-student:hover { border-color: var(--indigo); color: var(--indigo); }
+  .btn-delete-student {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--red);
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s;
+  }
+  .btn-delete-student:hover { border-color: var(--red); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+    border-radius: 8px 8px 0 0;
+  }
+  .tab-btn:hover { color: var(--indigo); }
+  .tab-btn.active { color: var(--indigo); border-bottom-color: var(--indigo); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .stat-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+  }
+  .stat-sub { font-size: 12px; color: var(--muted); }
+
+  /* SECTION CARD */
+  .section-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .section-head h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* TOPICS */
+  .topics-list { display: flex; flex-direction: column; gap: 8px; }
+  .topic-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    transition: border-color .15s, background .15s;
+    cursor: pointer;
+  }
+  .topic-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .topic-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background .15s, border-color .15s;
+  }
+  .topic-row.done .topic-check {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .topic-row.done .topic-check::after {
+    content: '';
+    display: block;
+    width: 10px; height: 7px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translate(1px,-1px);
+  }
+  .topic-text { flex: 1; font-size: 14px; }
+  .topic-row.done .topic-text { color: var(--muted); text-decoration: line-through; }
+
+  /* date pills */
+  .topic-date-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+  .topic-date-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600;
+    border-radius: 20px;
+    padding: 3px 9px;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: background .15s, border-color .15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .topic-date-pill.plan { background: var(--indigo-lt); color: var(--indigo); border-color: #f3b9d4; }
+  .topic-date-pill.plan:hover { background: #fad2e6; border-color: var(--indigo); }
+  .topic-date-pill.overdue { background: var(--red-lt); color: var(--red); border-color: #f5c0c0; }
+  .topic-date-pill.overdue:hover { background: #fadddd; border-color: var(--red); }
+  .topic-date-pill.done-date { background: var(--green-lt); color: var(--green); border-color: #b3e8cf; }
+  .topic-date-pill.done-date:hover { background: #cff0e2; border-color: var(--green); }
+  .topic-date-pill.no-date { background: transparent; color: var(--muted); border-color: var(--border); border-style: dashed; }
+  .topic-date-pill.no-date:hover { border-color: var(--indigo); color: var(--indigo); }
+  .topic-date-input {
+    border: 1.5px solid var(--indigo);
+    border-radius: 7px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .topic-date { font-size: 12px; color: var(--muted); }
+  .btn-remove-item {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color .15s, background .15s;
+  }
+  .btn-remove-item:hover { color: var(--red); background: var(--red-lt); }
+
+  /* ADD INPUT */
+  .add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .add-row input {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color .15s;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .add-row input:focus { border-color: var(--indigo); }
+  .btn-add {
+    background: var(--indigo);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .btn-add:hover { background: #B85580; }
+
+  /* ATTENDANCE */
+  .attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .att-cell {
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+  }
+  .att-cell:hover { border-color: var(--indigo); }
+  .att-cell.present { background: var(--green-lt); border-color: var(--green); }
+  .att-cell.absent  { background: var(--red-lt);   border-color: var(--red); }
+  .att-cell.planned {
+    background: var(--indigo-lt);
+    border-color: #f3b9d4;
+    border-style: dashed;
+  }
+  .att-cell.planned:hover { border-color: var(--indigo); border-style: dashed; }
+  .att-date { font-size: 13px; font-weight: 600; }
+  .att-status {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .att-cell.present .att-status { color: var(--green); }
+  .att-cell.absent  .att-status { color: var(--red); }
+  .att-cell.planned .att-status { color: var(--indigo); }
+  .att-cell .att-remove {
+    position: absolute;
+    top: 6px; right: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .att-cell:hover .att-remove { opacity: 1; }
+
+  .att-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .att-add-row input[type="date"] {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color .15s;
+  }
+  .att-add-row input[type="date"]:focus { border-color: var(--indigo); }
+  .btn-present {
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s;
+  }
+  .btn-present:hover { background: #69B690; }
+  .btn-absent {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s;
+  }
+  .btn-absent:hover { background: #D67A7A; }
+
+  /* HOMEWORK */
+  .hw-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    transition: border-color .15s, background .15s;
+  }
+  .hw-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .hw-badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    padding: 3px 9px;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s, color .15s;
+  }
+  .hw-badge.pending  { background: var(--amber-lt); color: var(--amber); }
+  .hw-badge.done     { background: var(--green-lt);  color: var(--green); }
+  .hw-badge.overdue  { background: var(--red-lt);    color: var(--red);   }
+  .hw-text { flex: 1; font-size: 14px; }
+  .hw-row.status-done .hw-text { color: var(--muted); text-decoration: line-through; }
+  .hw-due { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+
+  .hw-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .hw-add-row input[type="text"] {
+    flex: 1;
+    min-width: 140px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color .15s;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .hw-add-row input[type="text"]:focus { border-color: var(--indigo); }
+  .hw-add-row input[type="date"] {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color .15s;
+  }
+  .hw-add-row input[type="date"]:focus { border-color: var(--indigo); }
+
+  /* HW IMAGE ATTACHMENTS */
+  .hw-row { flex-wrap: wrap; }
+  .hw-main-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+  .hw-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 0 2px 0;
+  }
+  .hw-thumb-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .hw-thumb {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    display: block;
+    transition: opacity .15s, border-color .15s;
+  }
+  .hw-thumb:hover { opacity: .85; border-color: var(--indigo); }
+  .hw-thumb-del {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    padding: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .hw-thumb-wrap:hover .hw-thumb-del { display: flex; }
+
+  /* attach button inside hw-row */
+  .btn-attach {
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-attach:hover { border-color: var(--indigo); color: var(--indigo); }
+
+  /* drop zone in add form */
+  .hw-dropzone {
+    width: 100%;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    margin-top: 4px;
+  }
+  .hw-dropzone:hover, .hw-dropzone.drag-over {
+    border-color: var(--indigo);
+    background: var(--indigo-lt);
+    color: var(--indigo);
+  }
+  .hw-dropzone-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .dz-thumb-wrap { position: relative; display: inline-block; }
+  .dz-thumb {
+    width: 64px; height: 64px;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 1.5px solid var(--border);
+    display: block;
+  }
+  .dz-thumb-del {
+    position: absolute;
+    top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  /* LIGHTBOX */
+  .lightbox {
+    position: fixed; inset: 0;
+    background: rgba(10,14,28,.88);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 300;
+    backdrop-filter: blur(6px);
+    cursor: zoom-out;
+  }
+  .lightbox.hidden { display: none; }
+  .lightbox img {
+    max-width: 92vw;
+    max-height: 88vh;
+    border-radius: 10px;
+    box-shadow: 0 24px 80px rgba(0,0,0,.5);
+    cursor: default;
+  }
+  .lightbox-close {
+    position: absolute;
+    top: 20px; right: 24px;
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+    opacity: .7;
+    transition: opacity .15s;
+    background: none;
+    border: none;
+  }
+  .lightbox-close:hover { opacity: 1; }
+
+  /* LINKS TAB */
+  .board-pin {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, #AE4F78 0%, #B85580 100%);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 18px rgba(204,107,150,.22);
+  }
+  .board-pin-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .board-pin-body { flex: 1; min-width: 0; }
+  .board-pin-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.7);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .board-pin-url {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+  }
+  .board-pin-empty {
+    color: rgba(255,255,255,.85);
+    font-size: 14px;
+  }
+  .board-pin-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .board-pin-btn {
+    background: rgba(255,255,255,.18);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .board-pin-btn:hover { background: rgba(255,255,255,.3); }
+  .board-pin-btn.edit-btn {
+    background: #fff;
+    color: var(--indigo);
+  }
+  .board-pin-btn.edit-btn:hover { background: rgba(255,255,255,.9); }
+
+  .link-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    transition: border-color .15s, background .15s;
+  }
+  .link-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .link-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--indigo-lt);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .link-body { flex: 1; min-width: 0; }
+  .link-title { font-size: 14px; font-weight: 600; }
+  .link-url {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+  }
+  .link-open-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--indigo);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, background .15s;
+    white-space: nowrap;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .link-open-btn:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+
+  .link-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .link-add-row input {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color .15s;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .link-add-row input:focus { border-color: var(--indigo); }
+  .link-add-row input.link-title-input { flex: 0 0 160px; }
+  .link-add-row input.link-url-input { flex: 1; min-width: 160px; }
+
+  /* FINANCE TAB */
+  .fin-summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .fin-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    transition: border-color .15s, background .15s;
+  }
+  .fin-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .fin-paid-badge, .fin-unpaid-badge {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    padding: 3px 9px;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .fin-paid-badge { background: var(--green-lt); color: var(--green); }
+  .fin-unpaid-badge { background: var(--red-lt); color: var(--red); }
+  .fin-date { font-size: 13px; flex: 1; }
+  .fin-amount { font-weight: 700; font-size: 14px; }
+  .fin-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .fin-add-row input {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .fin-add-row input:focus { border-color: var(--indigo); }
+  .fin-add-row input.fin-amount-input { width: 110px; }
+  .fin-add-row input.fin-date-input { width: 150px; }
+
+  /* SESSION NOTES (inside attendance cells) */
+  .att-note-btn {
+    margin-top: 6px;
+    width: 100%;
+    background: rgba(255,255,255,.6);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 3px 0;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .att-note-btn:hover { border-color: var(--indigo); color: var(--indigo); }
+  .att-note-btn.has-note { background: var(--indigo-lt); border-style: solid; border-color: var(--indigo); color: var(--indigo); }
+
+  /* MISTAKES BANK */
+  .mistake-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    transition: border-color .15s, background .15s;
+  }
+  .mistake-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .mistake-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .mistake-text { flex: 1; font-size: 14px; line-height: 1.5; }
+  .mistake-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .mistake-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .mistake-add-row textarea {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    resize: vertical;
+    min-height: 38px;
+  }
+  .mistake-add-row textarea:focus { border-color: var(--indigo); }
+
+  /* PROGRAM TEMPLATES */
+  .template-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+  }
+  .template-name { flex: 1; font-size: 14px; font-weight: 600; }
+  .template-count { font-size: 12px; color: var(--muted); }
+  .template-apply-btn {
+    background: var(--indigo);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .template-apply-btn:hover { background: #A8487A; }
+
+  /* PRINT REPORT (hidden helper iframe content uses inline styles) */
+  .btn-export {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--indigo);
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, background .15s;
+  }
+  .btn-export:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20,12,16,.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  }
+  .modal h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color .15s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--indigo); }
+  .color-swatches {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .swatch {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--border);
+    transition: border-color .15s, transform .15s;
+  }
+  .swatch.selected { border-color: var(--text); transform: scale(1.15); }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    justify-content: flex-end;
+  }
+  .btn-secondary {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    transition: border-color .15s;
+  }
+  .btn-secondary:hover { border-color: var(--indigo); color: var(--indigo); }
+  .btn-primary {
+    background: var(--indigo);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background .15s;
+  }
+  .btn-primary:hover { background: #B85580; }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 5px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--indigo);
+    transition: width .4s ease;
+  }
+
+  /* NO STUDENT SELECTED */
+  .no-student {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px;
+    color: var(--muted);
+    gap: 16px;
+    text-align: center;
+  }
+  .no-student .big-icon { font-size: 56px; opacity: .4; }
+  .no-student h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--blue);
+    opacity: .5;
+  }
+  .no-student p { font-size: 14px; max-width: 240px; }
+
+  /* DASHBOARD */
+  .dash-greeting {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    margin-bottom: 4px;
+  }
+  .dash-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+  .dash-stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .dash-stat-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .dash-stat-label { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .dash-stat-value {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    margin-top: 4px;
+  }
+
+  .dash-section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .upcoming-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+  .upcoming-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform .12s;
+  }
+  .upcoming-row:hover { transform: translateX(2px); }
+  .upcoming-date-block {
+    flex-shrink: 0;
+    width: 54px;
+    text-align: center;
+    border-radius: 10px;
+    background: var(--indigo-lt);
+    padding: 6px 0;
+  }
+  .upcoming-date-block .day { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 17px; color: var(--indigo); line-height: 1; }
+  .upcoming-date-block .mon { font-size: 10px; color: var(--indigo); text-transform: uppercase; font-weight: 600; }
+  .upcoming-body { flex: 1; min-width: 0; }
+  .upcoming-name { font-weight: 600; font-size: 14px; }
+  .upcoming-subject { font-size: 12px; color: var(--muted); }
+  .upcoming-when {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--indigo);
+    background: var(--indigo-lt);
+    border-radius: 20px;
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
+
+  .dash-two-col { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: start; }
+  .dash-finance-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .dash-finance-row:last-child { border-bottom: none; }
+
+  @media (max-width: 900px) {
+    .dash-stats-row { grid-template-columns: 1fr 1fr; }
+    .dash-two-col { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 700px) {
+    .app { grid-template-columns: 1fr; }
+    aside { display: none; }
+    main { padding: 20px 16px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .dash-stats-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Репетитор<span>.</span></div>
+    <div class="login-subtitle">Личный журнал репетитора</div>
+    <div class="login-error" id="loginError">Неверный пароль. Попробуйте ещё раз.</div>
+    <label class="login-label" for="loginPassword">Пароль</label>
+    <input class="login-input" type="password" id="loginPassword"
+      placeholder="Введите пароль"
+      onkeydown="if(event.key==='Enter')submitLogin()">
+    <button class="login-btn" onclick="submitLogin()">Войти</button>
+    <div class="login-hint" id="loginHint"></div>
+  </div>
+</div>
+
+<!-- ── APP (hidden until logged in) ── -->
+<div id="appRoot">
+
+<header>
+  <div class="logo-row">
+    <div class="logo" onclick="showDashboard()" style="cursor:pointer">Репетитор<span>.</span></div>
+    <button class="header-home-btn" id="navHome" onclick="showDashboard()">🏠 Главная</button>
+    <button class="header-home-btn" id="navSchedule" onclick="showScheduleView()">📅 Расписание</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="header-date" id="headerDate"></div>
+    <button class="header-home-btn" onclick="showChangePassword()" title="Сменить пароль" style="font-size:16px;padding:4px 10px">🔑</button>
+    <button class="header-home-btn" onclick="logout()" title="Выйти" style="font-size:16px;padding:4px 10px">🚪</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside>
+    <div class="sidebar-title">Ученики</div>
+    <div id="studentList"></div>
+    <button class="btn-add-student" onclick="openAddStudentModal()">+ Добавить ученика</button>
+  </aside>
+
+  <main id="mainContent">
+  </main>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox hidden" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="" onclick="event.stopPropagation()">
+</div>
+
+<!-- MODAL: Add/Edit Student -->
+<div class="modal-overlay hidden" id="studentModal">
+  <div class="modal">
+    <h3 id="modalTitle">Новый ученик</h3>
+    <div class="form-group">
+      <label>Имя и фамилия</label>
+      <input type="text" id="inputName" placeholder="Анна Иванова">
+    </div>
+    <div class="form-group">
+      <label>Предмет</label>
+      <input type="text" id="inputSubject" placeholder="Математика">
+    </div>
+    <div class="form-group">
+      <label>Цвет аватара</label>
+      <div class="color-swatches" id="colorSwatches"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeStudentModal()">Отмена</button>
+      <button class="btn-primary" id="saveStudentBtn" onclick="saveStudent()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+const AUTH_KEY   = 'tutorAuth_hash';
+const SESSION_KEY = 'tutorAuth_session';
+const DEFAULT_PASSWORD = 'репетитор'; // shown as hint on first launch
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function getStoredHash() { return localStorage.getItem(AUTH_KEY); }
+function setStoredHash(h) { localStorage.setItem(AUTH_KEY, h); }
+function setSession()     { sessionStorage.setItem(SESSION_KEY, '1'); }
+function hasSession()     { return sessionStorage.getItem(SESSION_KEY) === '1'; }
+function clearSession()   { sessionStorage.removeItem(SESSION_KEY); }
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appRoot').style.display = 'contents';
+}
+function showLoginScreen() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appRoot').style.display = 'none';
+  setTimeout(() => document.getElementById('loginPassword').focus(), 100);
+}
+
+async function submitLogin() {
+  const pwd = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  if (!pwd) { errEl.classList.add('show'); errEl.textContent = 'Введите пароль.'; return; }
+  const hash = await sha256(pwd);
+  const stored = getStoredHash();
+  if (!stored) {
+    // First launch — any password sets it
+    setStoredHash(hash);
+    setSession();
+    document.getElementById('loginPassword').value = '';
+    errEl.classList.remove('show');
+    showApp();
+    initApp();
+    return;
+  }
+  if (hash === stored) {
+    setSession();
+    document.getElementById('loginPassword').value = '';
+    errEl.classList.remove('show');
+    showApp();
+    initApp();
+  } else {
+    errEl.textContent = 'Неверный пароль. Попробуйте ещё раз.';
+    errEl.classList.add('show');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  }
+}
+
+function logout() {
+  clearSession();
+  showLoginScreen();
+}
+
+function showChangePassword() {
+  ['cpwdCurrent','cpwdNew','cpwdRepeat'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cpwdError').textContent = '';
+  document.getElementById('changePwdModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('cpwdCurrent').focus(), 60);
+}
+
+async function submitChangePassword() {
+  const current = document.getElementById('cpwdCurrent').value;
+  const newPwd  = document.getElementById('cpwdNew').value;
+  const repeat  = document.getElementById('cpwdRepeat').value;
+  const errEl   = document.getElementById('cpwdError');
+
+  if (!current || !newPwd || !repeat) { errEl.textContent = 'Заполните все поля.'; return; }
+  if (newPwd.length < 4) { errEl.textContent = 'Новый пароль должен быть не менее 4 символов.'; return; }
+  if (newPwd !== repeat) { errEl.textContent = 'Пароли не совпадают.'; return; }
+
+  const currentHash = await sha256(current);
+  if (currentHash !== getStoredHash()) { errEl.textContent = 'Текущий пароль неверен.'; return; }
+
+  const newHash = await sha256(newPwd);
+  setStoredHash(newHash);
+  document.getElementById('changePwdModal').classList.add('hidden');
+  // Show brief success toast
+  const toast = document.createElement('div');
+  toast.textContent = '✓ Пароль успешно изменён';
+  toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--green);color:#fff;padding:12px 24px;border-radius:10px;
+    font-weight:600;font-size:14px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.15)`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// Boot: check session before showing anything
+(function boot() {
+  if (hasSession()) {
+    // Already logged in this browser session
+    showApp();
+    // initApp() will be called below after STATE section loads
+    // We defer it so all functions are defined first
+    window._autoInit = true;
+  } else {
+    // Show login; set hint if first launch
+    const hint = document.getElementById('loginHint');
+    if (!getStoredHash()) {
+      hint.textContent = 'Первый вход: придумайте любой пароль и нажмите «Войти» — он сохранится.';
+    }
+  }
+})();
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const COLORS = ['#F2C2D6','#C2D8F2','#C7E8D6','#F2DBBE','#DCC9EE','#F2C2BE','#C2E2E5','#F0E0A8','#D2DCC0','#EEC2E2'];
+const STORAGE_KEY = 'tutorJournal_v2';
+const WEEK_DAYS = ['пн','вт','ср','чт','пт','сб','вс'];
+
+let state = {
+  students: [],
+  activeId: null,
+  templates: [],
+  view: 'dashboard'   // 'dashboard' | 'student'
+};
+
+let activeTab = 'topics';
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      state = JSON.parse(raw);
+      if (!('templates' in state)) state.templates = [];
+      if (!('view' in state)) state.view = state.activeId ? 'student' : 'dashboard';
+      // Migrate old topic format: {date: "дд.мм"} → {planDate:'', doneDate:''}
+      state.students.forEach(s => {
+        if (!('boardUrl' in s)) s.boardUrl = '';
+        if (!('links' in s)) s.links = [];
+        if (!('hourlyRate' in s)) s.hourlyRate = 1500;
+        if (!('payments' in s)) s.payments = [];
+        if (!('mistakes' in s)) s.mistakes = [];
+        if (!('schedule' in s)) s.schedule = { slots: [] };
+        // migrate old format {days,time} → {slots}
+        else if (!Array.isArray(s.schedule.slots)) {
+          s.schedule = { slots: normalizeSchedule(s.schedule) };
+        }
+        (s.topics || []).forEach(t => {
+          if (!('planDate' in t)) t.planDate = '';
+          if (!('doneDate' in t)) {
+            // old t.date was "дд.мм" (display only), can't reliably convert — drop it
+            t.doneDate = t.done ? todayStr() : '';
+            delete t.date;
+          }
+        });
+        (s.attendance || []).forEach(a => {
+          if (!('note' in a)) a.note = '';
+        });
+      });
+    }
+  } catch(e) {}
+}
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function initApp() {
+  load();
+
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ru-RU', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  // Seed demo data if empty
+  if (state.students.length === 0) {
+    state.students = [
+      {
+        id: uid(), name: 'Анна Петрова', subject: 'Математика', color: '#F2C2D6',
+        boardUrl: 'https://miro.com/app/board/anna-petrova-math/',
+        hourlyRate: 1500,
+        schedule: { slots: [{ day: 'вт', time: '14:00' }, { day: 'чт', time: '14:00' }] },
+        links: [
+          { id: uid(), title: 'Учебник в PDF', url: 'https://example.com/textbook.pdf' },
+          { id: uid(), title: 'Тренажёр задач', url: 'https://example.com/practice' },
+        ],
+        payments: [
+          { id: uid(), date: '2025-06-05', amount: 1500, paid: true },
+          { id: uid(), date: '2025-06-12', amount: 1500, paid: true },
+          { id: uid(), date: '2025-06-19', amount: 1500, paid: false },
+          { id: uid(), date: '2025-06-26', amount: 1500, paid: true },
+        ],
+        mistakes: [
+          { id: uid(), text: 'Путает знаки при переносе слагаемых через равно', date: '2025-06-12' },
+          { id: uid(), text: 'Забывает проверять область допустимых значений в дробных уравнениях', date: '2025-06-19' },
+        ],
+        topics: [
+          { id: uid(), text: 'Квадратные уравнения', done: true,  planDate: '2025-06-12', doneDate: '2025-06-12' },
+          { id: uid(), text: 'Дроби и проценты',     done: true,  planDate: '2025-06-19', doneDate: '2025-06-21' },
+          { id: uid(), text: 'Тригонометрия',         done: false, planDate: '2025-07-03', doneDate: '' },
+          { id: uid(), text: 'Логарифмы',             done: false, planDate: '2025-07-10', doneDate: '' },
+        ],
+        attendance: [
+          { id: uid(), date: '2025-06-05', present: true },
+          { id: uid(), date: '2025-06-12', present: true },
+          { id: uid(), date: '2025-06-19', present: false },
+          { id: uid(), date: '2025-06-26', present: true },
+          { id: uid(), date: '2026-07-03', present: false, planned: true },
+          { id: uid(), date: '2026-07-10', present: false, planned: true },
+        ],
+        homework: [
+          { id: uid(), text: 'Задачи на уравнения стр.42', due: '2025-06-12', status: 'done' },
+          { id: uid(), text: 'Проценты: упражнения 1–15', due: '2025-06-19', status: 'done' },
+          { id: uid(), text: 'Тест по тригонометрии', due: '2025-07-03', status: 'pending' },
+        ]
+      },
+      {
+        id: uid(), name: 'Дмитрий Козлов', subject: 'Английский язык', color: '#C2D8F2',
+        boardUrl: 'https://miro.com/app/board/dmitry-kozlov-english/',
+        hourlyRate: 1200,
+        schedule: { slots: [{ day: 'пн', time: '16:30' }, { day: 'ср', time: '15:00' }] },
+        links: [
+          { id: uid(), title: 'Словарь слов', url: 'https://example.com/vocab' },
+        ],
+        payments: [
+          { id: uid(), date: '2025-06-10', amount: 1200, paid: true },
+          { id: uid(), date: '2025-06-17', amount: 1200, paid: true },
+          { id: uid(), date: '2025-06-24', amount: 1200, paid: true },
+        ],
+        mistakes: [
+          { id: uid(), text: 'Путает Present Perfect и Past Simple в устной речи', date: '2025-06-17' },
+        ],
+        topics: [
+          { id: uid(), text: 'Present Perfect vs Past Simple', done: true,  planDate: '2025-06-10', doneDate: '2025-06-10' },
+          { id: uid(), text: 'Conditionals (0, 1, 2)',          done: true,  planDate: '2025-06-17', doneDate: '2025-06-17' },
+          { id: uid(), text: 'Passive Voice',                   done: false, planDate: '2025-06-24', doneDate: '' },
+          { id: uid(), text: 'Reported Speech',                 done: false, planDate: '2025-07-01', doneDate: '' },
+          { id: uid(), text: 'Modal Verbs',                     done: false, planDate: '2025-07-08', doneDate: '' },
+        ],
+        attendance: [
+          { id: uid(), date: '2025-06-10', present: true },
+          { id: uid(), date: '2025-06-17', present: true },
+          { id: uid(), date: '2025-06-24', present: true },
+          { id: uid(), date: '2026-07-01', present: false, planned: true },
+          { id: uid(), date: '2026-07-08', present: false, planned: true },
+        ],
+        homework: [
+          { id: uid(), text: 'Grammar ex. 1–20 (p.68)', due: '2025-06-17', status: 'done' },
+          { id: uid(), text: 'Write essay 150 words', due: '2025-07-01', status: 'pending' },
+        ]
+      }
+    ];
+    save();
+  }
+
+  renderSidebar();
+  if (state.view === 'student' && state.activeId) {
+    renderMain();
+  } else if (state.view === 'schedule') {
+    setNavActive('navSchedule');
+    renderScheduleView();
+  } else {
+    setNavActive('navHome');
+    showDashboard();
+  }
+}
+
+// Auto-init if session already active (boot() set _autoInit)
+if (window._autoInit) initApp();
+
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('studentList');
+  list.innerHTML = '';
+  state.students.forEach(s => {
+    const pct = progressOf(s);
+    const el = document.createElement('div');
+    el.className = 'student-card' + (s.id === state.activeId && state.view === 'student' ? ' active' : '');
+    el.onclick = () => selectStudent(s.id);
+    const sch = s.schedule || {};
+    const slots = normalizeSchedule(sch);
+    const schText = slots.map(sl => sl.day + (sl.time ? ' ' + sl.time : '')).join(' / ');
+    el.innerHTML = `
+      <div class="avatar" style="background:${s.color}">${initials(s.name)}</div>
+      <div class="student-info">
+        <div class="student-name">${esc(s.name)}</div>
+        <div class="student-subject">${esc(s.subject)}</div>
+        ${schText ? `<div style="font-size:11px;color:var(--indigo);font-weight:600;margin-top:1px">📅 ${esc(schText)}</div>` : ''}
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="ring-wrap">${renderRing(pct, s.color)}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+function renderRing(pct, color) {
+  const r = 14, cx = 16, cy = 16;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * pct / 100;
+  return `<svg width="32" height="32" viewBox="0 0 32 32">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="3"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="3"
+      stroke-dasharray="${dash} ${circ}" stroke-linecap="round"
+      transform="rotate(-90 ${cx} ${cy})"/>
+    <text x="${cx}" y="${cy+4}" text-anchor="middle" fill="var(--text)" font-size="8" font-family="Montserrat" font-weight="700">${pct}%</text>
+  </svg>`;
+}
+
+function progressOf(s) {
+  if (!s.topics.length) return 0;
+  return Math.round(s.topics.filter(t => t.done).length / s.topics.length * 100);
+}
+
+function setNavActive(id) {
+  ['navHome','navSchedule'].forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.toggle('nav-active', btnId === id);
+  });
+}
+
+function selectStudent(id) {
+  state.activeId = id;
+  state.view = 'student';
+  save();
+  setNavActive(null);
+  renderSidebar();
+  renderMain();
+}
+
+function showDashboard() {
+  state.view = 'dashboard';
+  save();
+  setNavActive('navHome');
+  renderSidebar();
+  renderDashboard();
+}
+
+function showScheduleView() {
+  state.view = 'schedule';
+  save();
+  setNavActive('navSchedule');
+  renderSidebar();
+  renderScheduleView();
+}
+
+// ─── SCHEDULE VIEW ───────────────────────────────────────────────────────────
+function renderScheduleView() {
+  const main = document.getElementById('mainContent');
+
+  // Time range: 08:00 – 20:00, step 10 min
+  const START_H = 8, END_H = 20, STEP = 10;
+  const DAYS = ['пн','вт','ср','чт','пт','сб','вс'];
+  const CELL_H = 22; // px per 10-min slot
+  const LESSON_DUR = 60; // assume 60-min lesson for display height
+
+  // Today's day index (0=пн … 6=вс), js getDay: 0=sun,1=mon…
+  const jsDay = new Date().getDay();
+  const todayIdx = jsDay === 0 ? 6 : jsDay - 1; // convert to mon=0
+
+  // Build time slots list
+  const times = [];
+  for (let h = START_H; h < END_H; h++) {
+    for (let m = 0; m < 60; m += STEP) {
+      times.push({ h, m, label: h + ':' + String(m).padStart(2,'0') });
+    }
+  }
+
+  // Build lookup: dayIndex → [{student, time}]
+  const lessonsByDay = Array.from({length: 7}, () => []);
+  state.students.forEach(s => {
+    const slots = normalizeSchedule(s.schedule || {});
+    slots.forEach(sl => {
+      const di = DAYS.indexOf(sl.day);
+      if (di === -1 || !sl.time) return;
+      lessonsByDay[di].push({ student: s, time: sl.time });
+    });
+  });
+
+  // Generate time-to-row index for fast lookup
+  function timeToRow(timeStr) {
+    const [hh, mm] = timeStr.split(':').map(Number);
+    return (hh - START_H) * (60 / STEP) + Math.floor(mm / STEP);
+  }
+
+  // Build grid rows HTML
+  let rowsHtml = '';
+  times.forEach(({ h, m, label }, rowIdx) => {
+    const isHour = m === 0;
+    const showLabel = isHour || m === 30;
+    rowsHtml += `<div class="sg-time ${isHour ? 'hour-mark' : ''}">${showLabel ? label : ''}</div>`;
+
+    DAYS.forEach((day, di) => {
+      const isToday = di === todayIdx;
+      rowsHtml += `<div class="sg-cell ${isHour ? 'hour-mark' : ''} ${isToday ? 'today-col' : ''}" data-day="${di}" data-row="${rowIdx}">`;
+      // Place lessons that START at this slot
+      lessonsByDay[di].forEach(({ student: s, time }) => {
+        if (timeToRow(time) === rowIdx) {
+          const heightPx = (LESSON_DUR / STEP) * CELL_H - 2;
+          const prepKey = prepKey_(s.id, di, time);
+          const isPrepped = getPrepState(prepKey);
+          rowsHtml += `
+            <div class="sg-lesson" style="background:${darkenColor(s.color)};height:${heightPx}px">
+              <div class="sg-prep-check ${isPrepped ? 'checked' : ''}"
+                title="${isPrepped ? 'Материал готов' : 'Отметить как подготовлено'}"
+                onclick="togglePrep('${prepKey}',this)"></div>
+              <div class="sg-lesson-name" onclick="selectStudent('${s.id}')">${esc(s.name)}</div>
+              <div class="sg-lesson-time">${esc(time)}</div>
+            </div>`;
+        }
+      });
+      rowsHtml += `</div>`;
+    });
+  });
+
+  // Legend
+  const hasStudentsWithSchedule = state.students.some(s => normalizeSchedule(s.schedule || {}).length > 0);
+  const legendHtml = state.students
+    .filter(s => normalizeSchedule(s.schedule || {}).length > 0)
+    .map(s => `
+      <div class="legend-item" onclick="selectStudent('${s.id}')">
+        <div class="legend-dot" style="background:${darkenColor(s.color)}"></div>
+        <span>${esc(s.name)}</span>
+        <span style="color:var(--muted);font-size:12px">
+          ${normalizeSchedule(s.schedule).map(sl => sl.day + (sl.time ? ' ' + sl.time : '')).join(' / ')}
+        </span>
+      </div>`).join('');
+
+  main.innerHTML = `
+    <div class="schedule-view">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+        <h2 style="margin:0">📅 Расписание занятий</h2>
+        <button class="prep-reset-btn" onclick="resetAllPrep()">↺ Сбросить отметки подготовки</button>
+      </div>
+      ${hasStudentsWithSchedule
+        ? `<div class="schedule-legend">${legendHtml}</div>`
+        : `<div style="color:var(--muted);font-size:14px;margin-bottom:16px">
+            Пока ни у одного ученика не задано расписание.
+            Откройте карточку ученика и задайте расписание — оно появится здесь автоматически.
+          </div>`}
+      <div class="schedule-grid-wrap">
+        <div class="schedule-grid" style="--cell-h:${CELL_H}px">
+          <div class="sg-corner"></div>
+          ${DAYS.map((d, i) => `<div class="sg-day-header ${i === todayIdx ? 'today' : ''}">${d}</div>`).join('')}
+          ${rowsHtml}
+        </div>
+      </div>
+    </div>`;
+}
+
+// Darken a pastel hex color for text-on-color readability
+function darkenColor(hex) {
+  try {
+    hex = hex.replace('#','');
+    let r = parseInt(hex.slice(0,2),16);
+    let g = parseInt(hex.slice(2,4),16);
+    let b = parseInt(hex.slice(4,6),16);
+    r = Math.round(r * 0.62);
+    g = Math.round(g * 0.55);
+    b = Math.round(b * 0.62);
+    return `rgb(${r},${g},${b})`;
+  } catch(e) { return '#BD5085'; }
+}
+
+// ─── PREP STATE ───────────────────────────────────────────────────────────────
+// Key format: "prep_<studentId>_<dayIdx>_<HH:MM>"
+function prepKey_(studentId, dayIdx, time) {
+  return `prep_${studentId}_${dayIdx}_${time}`;
+}
+
+function getPrepState(key) {
+  try { return localStorage.getItem(key) === '1'; } catch(e) { return false; }
+}
+
+function togglePrep(key, el) {
+  const isNowChecked = !el.classList.contains('checked');
+  try {
+    if (isNowChecked) localStorage.setItem(key, '1');
+    else localStorage.removeItem(key);
+  } catch(e) {}
+  el.classList.toggle('checked', isNowChecked);
+  el.title = isNowChecked ? 'Материал готов' : 'Отметить как подготовлено';
+}
+
+function resetAllPrep() {
+  try {
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('prep_'));
+    keys.forEach(k => localStorage.removeItem(k));
+  } catch(e) {}
+  // Re-render only the checkboxes without full re-render for smoothness
+  document.querySelectorAll('.sg-prep-check').forEach(el => {
+    el.classList.remove('checked');
+    el.title = 'Отметить как подготовлено';
+  });
+}
+
+// ─── DASHBOARD ──────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const main = document.getElementById('mainContent');
+  const today = todayStr();
+
+  if (state.students.length === 0) {
+    main.innerHTML = `
+      <div class="no-student">
+        <div class="big-icon">🎓</div>
+        <h2>Добавьте первого ученика</h2>
+        <p>Нажмите «+ Добавить ученика» в боковой панели, чтобы начать</p>
+      </div>`;
+    return;
+  }
+
+  // Aggregate stats
+  let totalStudents = state.students.length;
+  let totalHwPending = 0;
+  let totalUnpaid = 0;
+  let totalUnpaidSum = 0;
+  let upcomingLessons = [];
+
+  state.students.forEach(s => {
+    (s.homework || []).forEach(h => {
+      if (h.status === 'pending') totalHwPending++;
+    });
+    (s.payments || []).forEach(p => {
+      if (!p.paid) { totalUnpaid++; totalUnpaidSum += (Number(p.amount) || 0); }
+    });
+    (s.attendance || []).forEach(a => {
+      if (a.date >= today) {
+        upcomingLessons.push({ student: s, date: a.date, attId: a.id });
+      }
+    });
+  });
+
+  upcomingLessons.sort((a, b) => a.date.localeCompare(b.date));
+  upcomingLessons = upcomingLessons.slice(0, 6);
+
+  const monthNames = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  const upcomingHtml = upcomingLessons.map(u => {
+    const d = new Date(u.date + 'T00:00:00');
+    const day = d.getDate();
+    const mon = monthNames[d.getMonth()];
+    const isToday = u.date === today;
+    const whenLabel = isToday ? 'Сегодня' : formatRelativeDay(u.date);
+    return `
+      <div class="upcoming-row" onclick="selectStudent('${u.student.id}')">
+        <div class="upcoming-date-block">
+          <div class="day">${day}</div>
+          <div class="mon">${mon}</div>
+        </div>
+        <div class="avatar" style="background:${u.student.color}">${initials(u.student.name)}</div>
+        <div class="upcoming-body">
+          <div class="upcoming-name">${esc(u.student.name)}</div>
+          <div class="upcoming-subject">${esc(u.student.subject)}</div>
+        </div>
+        <div class="upcoming-when">${whenLabel}</div>
+      </div>`;
+  }).join('');
+
+  // Finance summary per student (unpaid only)
+  const unpaidByStudent = state.students
+    .map(s => ({ s, sum: (s.payments || []).filter(p => !p.paid).reduce((acc, p) => acc + (Number(p.amount) || 0), 0), count: (s.payments || []).filter(p => !p.paid).length }))
+    .filter(x => x.count > 0);
+
+  const financeHtml = unpaidByStudent.length ? unpaidByStudent.map(x => `
+    <div class="dash-finance-row">
+      <span>${esc(x.s.name)}</span>
+      <span style="color:var(--red);font-weight:700">${x.sum.toLocaleString('ru-RU')} ₽ <span style="color:var(--muted);font-weight:500">(${x.count})</span></span>
+    </div>
+  `).join('') : `<div style="color:var(--muted);font-size:13px;padding:8px 0">Все занятия оплачены 🎉</div>`;
+
+  main.innerHTML = `
+    <div class="dash-greeting">Здравствуйте! 👋</div>
+    <div class="dash-sub">${new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+
+    <div class="dash-stats-row">
+      <div class="dash-stat-card">
+        <div class="dash-stat-label">Учеников</div>
+        <div class="dash-stat-value" style="color:var(--indigo)">${totalStudents}</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-label">Занятий впереди</div>
+        <div class="dash-stat-value" style="color:var(--indigo)">${upcomingLessons.length ? state.students.reduce((a,s)=>a+(s.attendance||[]).filter(x=>x.date>=today).length,0) : 0}</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-label">ДЗ не сдано</div>
+        <div class="dash-stat-value" style="color:var(--amber)">${totalHwPending}</div>
+      </div>
+      <div class="dash-stat-card">
+        <div class="dash-stat-label">Долг по оплате</div>
+        <div class="dash-stat-value" style="color:var(--red)">${totalUnpaidSum.toLocaleString('ru-RU')} ₽</div>
+      </div>
+    </div>
+
+    <div class="dash-two-col">
+      <div>
+        <div class="dash-section-title">📅 Ближайшие занятия</div>
+        <div class="upcoming-list">
+          ${upcomingHtml || '<div class="empty-state"><div class="icon">📅</div><p>Запланированных занятий пока нет</p></div>'}
+        </div>
+      </div>
+      <div>
+        <div class="dash-section-title">💰 Задолженности</div>
+        <div class="section-card" style="padding:16px 18px">
+          ${financeHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function formatRelativeDay(iso) {
+  const today = new Date(todayStr() + 'T00:00:00');
+  const target = new Date(iso + 'T00:00:00');
+  const diffDays = Math.round((target - today) / 86400000);
+  if (diffDays === 0) return 'Сегодня';
+  if (diffDays === 1) return 'Завтра';
+  if (diffDays > 1 && diffDays < 7) return `Через ${diffDays} дн.`;
+  return formatDate(iso);
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
+function renderMain() {
+  const s = state.students.find(x => x.id === state.activeId);
+  if (!s) return;
+  const main = document.getElementById('mainContent');
+
+  const topicsDone = s.topics.filter(t => t.done).length;
+  const today = todayStr();
+  const pastAtt    = s.attendance.filter(a => a.date <= today);
+  const attPresent = pastAtt.filter(a => a.present).length;
+  const attPlanned = s.attendance.filter(a => a.date > today).length;
+  const hwDone = s.homework.filter(h => h.status === 'done').length;
+
+  const sch = s.schedule || {};
+  // Normalize: support both old format {days,time} and new {slots:[{day,time}]}
+  const slots = normalizeSchedule(sch);
+  const scheduleText = slots.length
+    ? slots.map(sl => sl.day + (sl.time ? ' ' + sl.time : '')).join(' / ')
+    : null;
+
+  main.innerHTML = `
+    <div class="student-header">
+      <div class="avatar" style="background:${s.color};width:54px;height:54px;font-size:20px;align-self:center">${initials(s.name)}</div>
+      <div class="student-header-info">
+        <h1>${esc(s.name)}</h1>
+        <span class="subject-badge">${esc(s.subject)}</span>
+      </div>
+      <div class="student-header-actions">
+        <button class="btn-export" onclick="exportStudentReport('${s.id}')">📄 Отчёт</button>
+        <button class="btn-edit-student" onclick="openEditStudentModal()">✏ Редактировать</button>
+        <button class="btn-delete-student" onclick="deleteStudent()">✕</button>
+      </div>
+    </div>
+
+    <div class="schedule-block" style="margin-bottom:20px">
+      <div class="schedule-icon">📅</div>
+      <div class="schedule-body">
+        <div class="schedule-label">Расписание занятий</div>
+        ${scheduleText
+          ? `<div class="schedule-text" id="scheduleDisplay">${esc(scheduleText)}</div>`
+          : `<div class="schedule-empty" id="scheduleDisplay">Расписание не задано — нажмите ✏ чтобы добавить</div>`}
+      </div>
+      <button class="schedule-edit-btn" onclick="toggleScheduleEditor()" title="Изменить расписание">✏</button>
+    </div>
+    <div class="schedule-editor" id="scheduleEditor">
+      ${renderScheduleEditor(slots)}
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Темы пройдены</div>
+        <div class="stat-value" style="color:var(--indigo)">${topicsDone}/${s.topics.length}</div>
+        <div class="stat-sub">${progressOf(s)}% программы</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Посещаемость</div>
+        <div class="stat-value" style="color:var(--green)">${attPresent}/${pastAtt.length}</div>
+        <div class="stat-sub">${pastAtt.length ? Math.round(attPresent/pastAtt.length*100) : 0}% занятий${attPlanned ? ` · <span style="color:var(--indigo)">${attPlanned} план.</span>` : ''}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Домашние задания</div>
+        <div class="stat-value" style="color:var(--amber)">${hwDone}/${s.homework.length}</div>
+        <div class="stat-sub">${s.homework.length ? Math.round(hwDone/s.homework.length*100) : 0}% выполнено</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn ${activeTab==='topics'?'active':''}" data-tab="topics" onclick="switchTab('topics')">📚 Темы</button>
+      <button class="tab-btn ${activeTab==='attendance'?'active':''}" data-tab="attendance" onclick="switchTab('attendance')">📅 Посещаемость</button>
+      <button class="tab-btn ${activeTab==='homework'?'active':''}" data-tab="homework" onclick="switchTab('homework')">✏️ Домашние задания</button>
+      <button class="tab-btn ${activeTab==='finance'?'active':''}" data-tab="finance" onclick="switchTab('finance')">💰 Оплата</button>
+      <button class="tab-btn ${activeTab==='mistakes'?'active':''}" data-tab="mistakes" onclick="switchTab('mistakes')">🧩 Типовые ошибки</button>
+      <button class="tab-btn ${activeTab==='links'?'active':''}" data-tab="links" onclick="switchTab('links')">🔗 Ссылки</button>
+    </div>
+
+    <div id="tab-topics" class="tab-panel ${activeTab==='topics'?'active':''}">
+      ${renderTopicsPanel(s)}
+    </div>
+    <div id="tab-attendance" class="tab-panel ${activeTab==='attendance'?'active':''}">
+      ${renderAttendancePanel(s)}
+    </div>
+    <div id="tab-homework" class="tab-panel ${activeTab==='homework'?'active':''}">
+      ${renderHomeworkPanel(s)}
+    </div>
+    <div id="tab-finance" class="tab-panel ${activeTab==='finance'?'active':''}">
+      ${renderFinancePanel(s)}
+    </div>
+    <div id="tab-mistakes" class="tab-panel ${activeTab==='mistakes'?'active':''}">
+      ${renderMistakesPanel(s)}
+    </div>
+    <div id="tab-links" class="tab-panel ${activeTab==='links'?'active':''}">
+      ${renderLinksPanel(s)}
+    </div>
+  `;
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ─── TOPICS ──────────────────────────────────────────────────────────────────
+function renderTopicsPanel(s) {
+  const today = todayStr();
+  const items = s.topics.map(t => {
+    // Migrate old format: t.date was "дд.мм" string → treat as no ISO date
+    const planISO  = t.planDate  || '';  // ISO planned date
+    const doneISO  = t.doneDate  || '';  // ISO actual completion date
+
+    // Build plan pill
+    let planPill = '';
+    if (planISO) {
+      const isOverdue = !t.done && planISO < today;
+      const cls = isOverdue ? 'overdue' : 'plan';
+      const icon = isOverdue ? '⚠' : '📅';
+      planPill = `<span class="topic-date-pill ${cls}" onclick="event.stopPropagation();editTopicDate('${t.id}','plan')"
+        title="Плановая дата — нажмите, чтобы изменить">${icon} план: ${formatDate(planISO)}</span>`;
+    } else {
+      planPill = `<span class="topic-date-pill no-date" onclick="event.stopPropagation();editTopicDate('${t.id}','plan')"
+        title="Добавить плановую дату">+ план</span>`;
+    }
+
+    // Build done pill (only when done)
+    let donePill = '';
+    if (t.done) {
+      if (doneISO) {
+        donePill = `<span class="topic-date-pill done-date" onclick="event.stopPropagation();editTopicDate('${t.id}','done')"
+          title="Фактическая дата — нажмите, чтобы изменить">✓ ${formatDate(doneISO)}</span>`;
+      } else {
+        donePill = `<span class="topic-date-pill no-date" onclick="event.stopPropagation();editTopicDate('${t.id}','done')"
+          title="Добавить фактическую дату">+ факт</span>`;
+      }
+    }
+
+    return `
+      <div class="topic-row ${t.done?'done':''}" onclick="toggleTopic('${t.id}')">
+        <div class="topic-check"></div>
+        <span class="topic-text">${esc(t.text)}</span>
+        <div class="topic-date-wrap" id="tdw-${t.id}">
+          ${planPill}
+          ${donePill}
+        </div>
+        <button class="btn-remove-item" onclick="event.stopPropagation();removeTopic('${t.id}')">×</button>
+      </div>`;
+  }).join('');
+
+  const templatesHtml = (state.templates || []).map(tpl => `
+    <div class="template-row">
+      <span class="template-name">${esc(tpl.name)}</span>
+      <span class="template-count">${tpl.topics.length} тем</span>
+      <button class="template-apply-btn" onclick="applyTemplate('${tpl.id}')">Применить</button>
+      <button class="btn-remove-item" onclick="removeTemplate('${tpl.id}')">×</button>
+    </div>
+  `).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-head">
+        <h2>Шаблоны программ</h2>
+        <button class="btn-export" onclick="showSaveTemplateForm()">💾 Сохранить как шаблон</button>
+      </div>
+      <div id="saveTemplateForm" style="display:none;margin-bottom:14px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="templateNameInput" type="text" placeholder='Например: "Подготовка к ОГЭ"'
+            style="flex:1;min-width:180px;border:1.5px solid var(--indigo);border-radius:8px;
+              padding:9px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onkeydown="if(event.key==='Enter')confirmSaveTemplate();if(event.key==='Escape')hideSaveTemplateForm()">
+          <button class="btn-add" onclick="confirmSaveTemplate()">Сохранить</button>
+          <button class="btn-secondary" onclick="hideSaveTemplateForm()">Отмена</button>
+        </div>
+      </div>
+      ${(state.templates || []).length ? `<div class="topics-list">${templatesHtml}</div>` :
+        `<div style="color:var(--muted);font-size:13px">Шаблонов пока нет. Соберите список тем ниже и сохраните как шаблон — потом сможете применить его к любому ученику в один клик.</div>`}
+    </div>
+
+    <div class="section-card">
+      <div class="section-head"><h2>Список тем</h2></div>
+      <div class="topics-list">
+        ${items || '<div class="empty-state"><div class="icon">📋</div><p>Темы пока не добавлены</p></div>'}
+      </div>
+      <div class="add-row" style="align-items:center;flex-wrap:wrap;gap:8px">
+        <input type="text" id="newTopicInput" placeholder="Новая тема..." style="flex:1;min-width:160px"
+          onkeydown="if(event.key==='Enter')addTopic()">
+        <input type="date" id="newTopicDate" title="Плановая дата"
+          style="border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;font-family:Inter,sans-serif;outline:none;background:var(--bg);color:var(--text)">
+        <button class="btn-add" onclick="addTopic()">+ Добавить</button>
+      </div>
+    </div>`;
+}
+
+function toggleTopic(id) {
+  const s = getActive();
+  const t = s.topics.find(x => x.id === id);
+  t.done = !t.done;
+  if (t.done && !t.doneDate) {
+    t.doneDate = todayStr();
+  } else if (!t.done) {
+    t.doneDate = '';
+  }
+  save(); renderSidebar(); renderMain();
+}
+
+function removeTopic(id) {
+  const s = getActive();
+  s.topics = s.topics.filter(x => x.id !== id);
+  save(); renderSidebar(); renderMain();
+}
+
+function addTopic() {
+  const inp = document.getElementById('newTopicInput');
+  const dateinp = document.getElementById('newTopicDate');
+  const text = inp.value.trim();
+  if (!text) return;
+  getActive().topics.push({ id: uid(), text, done: false, planDate: dateinp.value || '', doneDate: '' });
+  inp.value = '';
+  // keep date for convenience, user can clear manually
+  save(); renderSidebar(); renderMain();
+  setTimeout(() => { const el = document.getElementById('newTopicInput'); if (el) el.focus(); }, 50);
+}
+
+// Inline date editor: replaces the pill with a date input, saves on change/blur
+function editTopicDate(topicId, kind) {
+  const wrap = document.getElementById('tdw-' + topicId);
+  if (!wrap) return;
+
+  const s = getActive();
+  const t = s.topics.find(x => x.id === topicId);
+  const currentVal = kind === 'plan' ? (t.planDate || '') : (t.doneDate || '');
+
+  // Replace the right pill with an <input type="date">
+  // Find the pill to replace (first = plan, second = done)
+  const pills = wrap.querySelectorAll('.topic-date-pill');
+  const targetPill = kind === 'plan' ? pills[0] : pills[1];
+  if (!targetPill) return;
+
+  const inp = document.createElement('input');
+  inp.type = 'date';
+  inp.className = 'topic-date-input';
+  inp.value = currentVal;
+
+  let committed = false;
+
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    if (kind === 'plan') t.planDate = inp.value;
+    else t.doneDate = inp.value;
+    save(); renderSidebar(); renderMain();
+  };
+
+  const cancel = () => {
+    if (committed) return;
+    committed = true;
+    renderSidebar(); renderMain();
+  };
+
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  });
+
+  targetPill.replaceWith(inp);
+  inp.focus();
+  try { inp.showPicker(); } catch(e) {}
+}
+
+// ─── PROGRAM TEMPLATES ──────────────────────────────────────────────────────
+function showSaveTemplateForm() {
+  const form = document.getElementById('saveTemplateForm');
+  if (!form) return;
+  form.style.display = 'block';
+  setTimeout(() => { const inp = document.getElementById('templateNameInput'); if (inp) inp.focus(); }, 30);
+}
+function hideSaveTemplateForm() {
+  const form = document.getElementById('saveTemplateForm');
+  if (form) form.style.display = 'none';
+}
+function confirmSaveTemplate() {
+  const inp = document.getElementById('templateNameInput');
+  if (!inp || !inp.value.trim()) { if (inp) inp.focus(); return; }
+  const s = getActive();
+  if (!s.topics.length) return;
+  const tpl = { id: uid(), name: inp.value.trim(), topics: s.topics.map(t => t.text) };
+  if (!state.templates) state.templates = [];
+  state.templates.push(tpl);
+  save(); renderMain();
+}
+function saveAsTemplate() { showSaveTemplateForm(); } // legacy alias
+
+function applyTemplate(tplId) {
+  const tpl = (state.templates || []).find(t => t.id === tplId);
+  if (!tpl) return;
+  // Show inline confirm banner
+  const existing = document.getElementById('applyTemplateConfirm');
+  if (existing) existing.remove();
+  const banner = document.createElement('div');
+  banner.id = 'applyTemplateConfirm';
+  banner.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--surface);border:1.5px solid var(--indigo);border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.15);padding:16px 20px;z-index:250;
+    display:flex;align-items:center;gap:12px;max-width:90vw;`;
+  banner.innerHTML = `
+    <span style="font-size:14px;color:var(--text)">Добавить <b>${tpl.topics.length}</b> тем из шаблона «${esc(tpl.name)}»?</span>
+    <button class="btn-add" style="padding:7px 14px;font-size:13px" onclick="confirmApplyTemplate('${tplId}')">Добавить</button>
+    <button class="btn-secondary" style="padding:7px 12px;font-size:13px" onclick="document.getElementById('applyTemplateConfirm').remove()">Отмена</button>
+  `;
+  document.body.appendChild(banner);
+}
+function confirmApplyTemplate(tplId) {
+  const tpl = (state.templates || []).find(t => t.id === tplId);
+  if (!tpl) return;
+  const s = getActive();
+  tpl.topics.forEach(text => s.topics.push({ id: uid(), text, done: false, planDate: '', doneDate: '' }));
+  const banner = document.getElementById('applyTemplateConfirm');
+  if (banner) banner.remove();
+  save(); renderSidebar(); renderMain();
+}
+
+function removeTemplate(tplId) {
+  state.templates = (state.templates || []).filter(t => t.id !== tplId);
+  save(); renderMain();
+}
+
+// ─── ATTENDANCE ───────────────────────────────────────────────────────────────
+function renderAttendancePanel(s) {
+  const today = todayStr();
+  const sorted = [...s.attendance].sort((a, b) => a.date.localeCompare(b.date));
+
+  // Split into past/today and future
+  const past    = sorted.filter(a => a.date <= today);
+  const planned = sorted.filter(a => a.date >  today);
+
+  function cellHtml(a) {
+    const isFuture = a.date > today;
+    const cls   = isFuture ? 'planned' : (a.present ? 'present' : 'absent');
+    const icon  = isFuture ? '📅' : (a.present ? '✓' : '✗');
+    const label = isFuture ? 'Запланировано'
+                           : (a.present ? 'Был' : 'Пропустил');
+    // future cells cycle: planned → (on day) becomes actionable; clicking marks present
+    const clickHandler = isFuture
+      ? `onclick="event.stopPropagation()"`   // no toggle for future — can only delete
+      : `onclick="toggleAttendance('${a.id}')"`;
+    const hasNote = a.note && a.note.trim();
+    return `
+      <div class="att-cell ${cls}" ${clickHandler}>
+        <button class="att-remove" onclick="event.stopPropagation();removeAttendance('${a.id}')"
+          title="Удалить">×</button>
+        <div class="att-date">${formatDate(a.date)}</div>
+        <div class="att-status">${icon} ${label}</div>
+        ${isFuture ? `
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <button style="flex:1;font-size:10px;font-weight:700;font-family:Inter,sans-serif;
+              padding:3px 0;border-radius:5px;border:none;cursor:pointer;
+              background:var(--green);color:#fff"
+              onclick="event.stopPropagation();markAttendance('${a.id}',true)">✓ Был</button>
+            <button style="flex:1;font-size:10px;font-weight:700;font-family:Inter,sans-serif;
+              padding:3px 0;border-radius:5px;border:none;cursor:pointer;
+              background:var(--red);color:#fff"
+              onclick="event.stopPropagation();markAttendance('${a.id}',false)">✗ Нет</button>
+          </div>` : `
+          <button class="att-note-btn ${hasNote ? 'has-note' : ''}" onclick="event.stopPropagation();editSessionNote('${a.id}')"
+            title="${hasNote ? esc(a.note) : 'Добавить заметку об уроке'}">
+            ${hasNote ? '📝 Заметка' : '+ заметка'}
+          </button>`}
+      </div>`;
+  }
+
+  const pastHtml    = past.map(cellHtml).join('');
+  const plannedHtml = planned.map(cellHtml).join('');
+
+  const attPresent = past.filter(a => a.present).length;
+  const attTotal   = past.length;
+
+  return `
+    <div class="section-card">
+      <div class="section-head">
+        <h2>Журнал посещаемости</h2>
+        <span style="font-size:13px;color:var(--muted)">
+          Прошедших: <b style="color:var(--text)">${attPresent}/${attTotal}</b>
+        </span>
+      </div>
+
+      ${planned.length ? `
+        <div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;
+          letter-spacing:.06em;text-transform:uppercase;color:var(--indigo);margin-bottom:10px">
+          Запланированные занятия
+        </div>
+        <div class="attendance-grid" style="margin-bottom:20px">${plannedHtml}</div>
+        <div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;
+          letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">
+          Прошедшие занятия
+        </div>` : ''}
+
+      <div class="attendance-grid">
+        ${pastHtml || (!planned.length ? '<div class="empty-state"><div class="icon">📅</div><p>Занятия ещё не записаны</p></div>' : '<div style="color:var(--muted);font-size:13px;padding:8px 0">Нет записей о прошедших занятиях</div>')}
+      </div>
+
+      <div class="att-add-row" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+        <input type="date" id="newAttDate" value="${todayStr()}">
+        <button class="btn-present" onclick="addAttendance(true)">✓ Был</button>
+        <button class="btn-absent"  onclick="addAttendance(false)">✗ Пропустил</button>
+        <button style="background:var(--indigo);color:#fff;border:none;border-radius:8px;
+          padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;
+          font-family:Inter,sans-serif;white-space:nowrap;transition:background .15s"
+          onmouseover="this.style.background='#B85580'" onmouseout="this.style.background='var(--indigo)'"
+          onclick="addAttendance('planned')">📅 Запланировать</button>
+      </div>
+    </div>`;
+}
+
+function toggleAttendance(id) {
+  const s = getActive();
+  const a = s.attendance.find(x => x.id === id);
+  a.present = !a.present;
+  save(); renderSidebar(); renderMain();
+}
+
+function markAttendance(id, present) {
+  const s = getActive();
+  const a = s.attendance.find(x => x.id === id);
+  a.present = present;
+  // move from "planned" to actual by keeping same date — status now decided
+  save(); renderSidebar(); renderMain();
+}
+
+function removeAttendance(id) {
+  const s = getActive();
+  s.attendance = s.attendance.filter(x => x.id !== id);
+  save(); renderSidebar(); renderMain();
+}
+
+function addAttendance(kind) {
+  const inp = document.getElementById('newAttDate');
+  if (!inp.value) return;
+  const s = getActive();
+  if (s.attendance.find(a => a.date === inp.value)) {
+    alert('Запись на эту дату уже существует'); return;
+  }
+  if (kind === 'planned') {
+    s.attendance.push({ id: uid(), date: inp.value, present: false, planned: true, note: '' });
+  } else {
+    s.attendance.push({ id: uid(), date: inp.value, present: kind === true, note: '' });
+  }
+  save(); renderSidebar(); renderMain();
+}
+
+function editSessionNote(attId) {
+  // Show a floating inline note editor anchored below the attendance grid
+  const existing = document.getElementById('sessionNoteEditor');
+  if (existing) existing.remove();
+
+  const s = getActive();
+  const a = s.attendance.find(x => x.id === attId);
+  if (!a) return;
+
+  const editor = document.createElement('div');
+  editor.id = 'sessionNoteEditor';
+  editor.style.cssText = `
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:var(--surface); border:1.5px solid var(--indigo);
+    border-radius:14px; box-shadow:0 8px 32px rgba(0,0,0,.18);
+    padding:20px 22px; width:440px; max-width:90vw; z-index:250;
+  `;
+  editor.innerHTML = `
+    <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;margin-bottom:10px;color:var(--text)">
+      📝 Заметка об уроке <span style="color:var(--muted);font-weight:500;font-size:12px">${formatDate(a.date)}</span>
+    </div>
+    <textarea id="sessionNoteText" rows="3"
+      style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;
+        font-size:14px;font-family:Inter,sans-serif;outline:none;resize:vertical;
+        background:var(--bg);color:var(--text);box-sizing:border-box"
+      placeholder="Что было сложно, на что обратить внимание в следующий раз...">${esc(a.note || '')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+      <button class="btn-secondary" onclick="document.getElementById('sessionNoteEditor').remove()">Отмена</button>
+      <button class="btn-primary" onclick="saveSessionNote('${attId}')">Сохранить</button>
+    </div>
+  `;
+  document.body ? document.body.appendChild(editor) : document.getElementById('mainContent').appendChild(editor);
+  setTimeout(() => {
+    const ta = document.getElementById('sessionNoteText');
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 30);
+}
+
+function saveSessionNote(attId) {
+  const ta = document.getElementById('sessionNoteText');
+  if (!ta) return;
+  const s = getActive();
+  const a = s.attendance.find(x => x.id === attId);
+  if (a) a.note = ta.value.trim();
+  save();
+  const editor = document.getElementById('sessionNoteEditor');
+  if (editor) editor.remove();
+  renderMain();
+}
+
+// ─── HOMEWORK ─────────────────────────────────────────────────────────────────
+function renderHomeworkPanel(s) {
+  const today = todayStr();
+  const items = s.homework.map(h => {
+    let status = h.status;
+    if (status === 'pending' && h.due && h.due < today) status = 'overdue';
+    const label = status === 'done' ? 'Выполнено' : status === 'overdue' ? 'Просрочено' : 'Не сдано';
+    const images = (h.images || []);
+    const thumbs = images.map((src, i) => `
+      <div class="hw-thumb-wrap">
+        <img class="hw-thumb" src="${src}" alt="фото ${i+1}" onclick="openLightbox('${h.id}',${i})">
+        <button class="hw-thumb-del" title="Удалить фото" onclick="removeHWImage('${h.id}',${i})">×</button>
+      </div>`).join('');
+
+    return `
+      <div class="hw-row status-${status}">
+        <div class="hw-main-line">
+          <button class="hw-badge ${status}" onclick="cycleHW('${h.id}')">${label}</button>
+          <span class="hw-text">${esc(h.text)}</span>
+          ${h.due ? `<span class="hw-due">до ${formatDate(h.due)}</span>` : ''}
+          <button class="btn-attach" title="Прикрепить фото" onclick="triggerHWImageUpload('${h.id}')">📎 Фото</button>
+          <button class="btn-remove-item" onclick="removeHW('${h.id}')">×</button>
+        </div>
+        ${images.length ? `<div class="hw-images">${thumbs}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-head"><h2>Домашние задания</h2></div>
+      <div class="topics-list" id="hwList">
+        ${items || '<div class="empty-state"><div class="icon">✏️</div><p>Заданий пока нет</p></div>'}
+      </div>
+      <div class="hw-add-row">
+        <input type="text" id="newHWInput" placeholder="Описание задания..." onkeydown="if(event.key==='Enter')addHW()">
+        <input type="date" id="newHWDue" value="${todayStr()}">
+        <button class="btn-add" onclick="addHW()">+ Добавить</button>
+      </div>
+      <div class="hw-dropzone" id="hwDropzone"
+        onclick="document.getElementById('hwDropzoneFile').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleHWDrop(event)">
+        📎 Перетащите сюда фото для нового задания или нажмите, чтобы выбрать
+        <input type="file" id="hwDropzoneFile" accept="image/*" multiple style="display:none" onchange="handleHWDropzoneFiles(this.files)">
+      </div>
+      <div class="hw-dropzone-previews" id="hwDzPreviews"></div>
+    </div>
+    <!-- hidden file input for attach-to-existing -->
+    <input type="file" id="hwAttachFile" accept="image/*" multiple style="display:none" onchange="handleHWAttachFiles(this.files)">
+  `;
+}
+
+// ── Image helpers ──────────────────────────────────────────────────────────────
+let _attachingHWId = null;
+let _pendingNewImages = []; // base64 for the *next* task being created
+
+function triggerHWImageUpload(hwId) {
+  _attachingHWId = hwId;
+  const inp = document.getElementById('hwAttachFile');
+  inp.value = '';
+  inp.click();
+}
+
+function handleHWAttachFiles(files) {
+  if (!files || !files.length) return;
+  const s = getActive();
+  const h = s.homework.find(x => x.id === _attachingHWId);
+  if (!h) return;
+  if (!h.images) h.images = [];
+  readFilesAsBase64(Array.from(files), (results) => {
+    h.images.push(...results);
+    save(); renderSidebar(); renderMain();
+  });
+}
+
+function removeHWImage(hwId, idx) {
+  const s = getActive();
+  const h = s.homework.find(x => x.id === hwId);
+  if (!h || !h.images) return;
+  h.images.splice(idx, 1);
+  save(); renderSidebar(); renderMain();
+}
+
+function handleHWDrop(e) {
+  e.preventDefault();
+  document.getElementById('hwDropzone').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  readFilesAsBase64(files, (results) => {
+    _pendingNewImages.push(...results);
+    renderDzPreviews();
+  });
+}
+
+function handleHWDropzoneFiles(files) {
+  const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+  if (!arr.length) return;
+  readFilesAsBase64(arr, (results) => {
+    _pendingNewImages.push(...results);
+    renderDzPreviews();
+  });
+}
+
+function renderDzPreviews() {
+  const wrap = document.getElementById('hwDzPreviews');
+  if (!wrap) return;
+  wrap.innerHTML = _pendingNewImages.map((src, i) => `
+    <div class="dz-thumb-wrap">
+      <img class="dz-thumb" src="${src}" alt="">
+      <button class="dz-thumb-del" onclick="removePendingImg(${i})">×</button>
+    </div>`).join('');
+}
+
+function removePendingImg(i) {
+  _pendingNewImages.splice(i, 1);
+  renderDzPreviews();
+}
+
+function readFilesAsBase64(files, cb) {
+  const results = [];
+  let done = 0;
+  files.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      results[i] = e.target.result;
+      done++;
+      if (done === files.length) cb(results);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+function openLightbox(hwId, imgIdx) {
+  const s = getActive();
+  const h = s.homework.find(x => x.id === hwId);
+  if (!h || !h.images || !h.images[imgIdx]) return;
+  document.getElementById('lightboxImg').src = h.images[imgIdx];
+  document.getElementById('lightbox').classList.remove('hidden');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.add('hidden');
+  document.getElementById('lightboxImg').src = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+function cycleHW(id) {
+  const s = getActive();
+  const h = s.homework.find(x => x.id === id);
+  h.status = h.status === 'pending' ? 'done' : 'pending';
+  save(); renderSidebar(); renderMain();
+}
+function removeHW(id) {
+  const s = getActive();
+  s.homework = s.homework.filter(x => x.id !== id);
+  save(); renderSidebar(); renderMain();
+}
+function addHW() {
+  const inp = document.getElementById('newHWInput');
+  const due = document.getElementById('newHWDue');
+  const text = inp.value.trim();
+  if (!text) return;
+  const images = [..._pendingNewImages];
+  _pendingNewImages = [];
+  getActive().homework.push({ id: uid(), text, due: due.value, status: 'pending', images });
+  save(); renderSidebar(); renderMain();
+  setTimeout(() => { const el = document.getElementById('newHWInput'); if(el) el.focus(); }, 50);
+}
+
+// ─── FINANCE ──────────────────────────────────────────────────────────────────
+function renderFinancePanel(s) {
+  const payments = s.payments || [];
+  const sorted = [...payments].sort((a, b) => b.date.localeCompare(a.date));
+
+  const totalPaid = payments.filter(p => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const totalUnpaid = payments.filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const countUnpaid = payments.filter(p => !p.paid).length;
+
+  const rows = sorted.map(p => `
+    <div class="fin-row">
+      <button class="${p.paid ? 'fin-paid-badge' : 'fin-unpaid-badge'}" onclick="togglePayment('${p.id}')">
+        ${p.paid ? 'Оплачено' : 'Не оплачено'}
+      </button>
+      <span class="fin-date">${formatDate(p.date)}</span>
+      <span class="fin-amount" style="color:${p.paid ? 'var(--green)' : 'var(--red)'}">${Number(p.amount).toLocaleString('ru-RU')} ₽</span>
+      <button class="btn-remove-item" onclick="removePayment('${p.id}')">×</button>
+    </div>
+  `).join('');
+
+  return `
+    <div class="fin-summary-row">
+      <div class="stat-card">
+        <div class="stat-label">Ставка за занятие</div>
+        <div id="rateDisplay" style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span class="stat-value" style="color:var(--indigo);font-size:20px">${Number(s.hourlyRate || 0).toLocaleString('ru-RU')} ₽</span>
+          <button class="btn-remove-item" style="font-size:13px" onclick="showRateEditor()" title="Изменить ставку">✏</button>
+        </div>
+        <div id="rateEditor" style="display:none;margin-top:8px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="rateInput" type="number" value="${s.hourlyRate || 0}" min="0"
+              style="width:100px;border:1.5px solid var(--indigo);border-radius:7px;padding:6px 10px;
+                font-size:14px;font-family:Inter,sans-serif;outline:none;background:var(--surface);color:var(--text)"
+              onkeydown="if(event.key==='Enter')saveRate();if(event.key==='Escape')hideRateEditor();">
+            <span style="font-size:13px;color:var(--muted)">₽</span>
+            <button class="btn-add" style="padding:6px 12px;font-size:12px" onclick="saveRate()">OK</button>
+            <button class="btn-secondary" style="padding:6px 10px;font-size:12px" onclick="hideRateEditor()">✕</button>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Оплачено всего</div>
+        <div class="stat-value" style="color:var(--green);font-size:20px">${totalPaid.toLocaleString('ru-RU')} ₽</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Задолженность</div>
+        <div class="stat-value" style="color:var(--red);font-size:20px">${totalUnpaid.toLocaleString('ru-RU')} ₽</div>
+        <div class="stat-sub">${countUnpaid ? countUnpaid + ' неоплач. занятий' : 'долгов нет'}</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head"><h2>История оплат</h2></div>
+      <div class="topics-list">
+        ${rows || '<div class="empty-state"><div class="icon">💰</div><p>Записей об оплате пока нет</p></div>'}
+      </div>
+      <div class="fin-add-row">
+        <input type="date" id="newFinDate" class="fin-date-input" value="${todayStr()}">
+        <input type="number" id="newFinAmount" class="fin-amount-input" placeholder="Сумма ₽" value="${s.hourlyRate || ''}">
+        <button class="btn-present" onclick="addPayment(true)">✓ Оплачено</button>
+        <button class="btn-absent" onclick="addPayment(false)">✗ Не оплачено</button>
+      </div>
+    </div>`;
+}
+
+function showRateEditor() {
+  document.getElementById('rateDisplay').style.display = 'none';
+  document.getElementById('rateEditor').style.display = 'block';
+  const inp = document.getElementById('rateInput');
+  if (inp) { inp.focus(); inp.select(); }
+}
+function hideRateEditor() {
+  document.getElementById('rateDisplay').style.display = 'flex';
+  document.getElementById('rateEditor').style.display = 'none';
+}
+function saveRate() {
+  const inp = document.getElementById('rateInput');
+  if (!inp) return;
+  const num = parseFloat(String(inp.value).replace(',', '.'));
+  if (isNaN(num) || num < 0) { inp.focus(); return; }
+  getActive().hourlyRate = num;
+  save(); renderMain();
+}
+
+function editHourlyRate() { showRateEditor(); } // kept for any legacy references
+
+// ─── SCHEDULE EDITOR ─────────────────────────────────────────────────────────
+
+// Normalize old format {days:[],time:''} → new [{day,time}]
+function normalizeSchedule(sch) {
+  if (!sch) return [];
+  if (Array.isArray(sch.slots)) return sch.slots;
+  // old format migration
+  if (Array.isArray(sch.days) && sch.days.length) {
+    return sch.days.map(d => ({ day: d, time: sch.time || '' }));
+  }
+  return [];
+}
+
+function scheduleToString(slots) {
+  return slots.map(sl => sl.day + (sl.time ? ' ' + sl.time : '')).join(' / ');
+}
+
+function renderScheduleEditor(slots) {
+  const rows = slots.length ? slots : [{ day: '', time: '' }];
+  const rowsHtml = rows.map((sl, i) => renderSlotRow(sl, i)).join('');
+  return `
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;
+      letter-spacing:.05em;margin-bottom:10px">Дни и время занятий</div>
+    <div id="slotRows">${rowsHtml}</div>
+    <button class="btn-add-slot" onclick="addSlotRow()">+ Добавить день</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-add" onclick="saveSchedule()">Сохранить</button>
+      <button class="btn-secondary" onclick="toggleScheduleEditor()">Отмена</button>
+      <button class="btn-secondary" style="color:var(--red);margin-left:auto" onclick="clearSchedule()">Очистить всё</button>
+    </div>`;
+}
+
+function renderSlotRow(sl, i) {
+  const dayBtns = WEEK_DAYS.map(d =>
+    `<button type="button" class="day-btn ${sl.day === d ? 'selected' : ''}"
+      onclick="selectSlotDay(this, ${i}, '${d}')">${d}</button>`
+  ).join('');
+  return `
+    <div class="schedule-slot-row" id="slotRow-${i}" data-index="${i}">
+      <div class="schedule-days">${dayBtns}</div>
+      <input class="slot-time-input" type="time" value="${esc(sl.time || '')}"
+        data-slot="${i}" placeholder="Время">
+      <button class="slot-remove-btn" onclick="removeSlotRow(${i})" title="Удалить">×</button>
+    </div>`;
+}
+
+function selectSlotDay(btn, rowIndex, day) {
+  // Deselect all day-btns in this row, select clicked one
+  const row = document.getElementById('slotRow-' + rowIndex);
+  if (!row) return;
+  row.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function addSlotRow() {
+  const container = document.getElementById('slotRows');
+  if (!container) return;
+  const i = container.querySelectorAll('.schedule-slot-row').length;
+  const div = document.createElement('div');
+  div.innerHTML = renderSlotRow({ day: '', time: '' }, i);
+  container.appendChild(div.firstElementChild);
+}
+
+function removeSlotRow(i) {
+  const row = document.getElementById('slotRow-' + i);
+  if (row) row.remove();
+  // Re-index remaining rows so IDs stay unique
+  const container = document.getElementById('slotRows');
+  if (!container) return;
+  container.querySelectorAll('.schedule-slot-row').forEach((row, newIdx) => {
+    row.id = 'slotRow-' + newIdx;
+    row.dataset.index = newIdx;
+    row.querySelectorAll('.day-btn').forEach(b => {
+      b.setAttribute('onclick', `selectSlotDay(this, ${newIdx}, '${b.textContent.trim()}')`);
+    });
+    const timeInp = row.querySelector('.slot-time-input');
+    if (timeInp) timeInp.dataset.slot = newIdx;
+    const removeBtn = row.querySelector('.slot-remove-btn');
+    if (removeBtn) removeBtn.setAttribute('onclick', `removeSlotRow(${newIdx})`);
+  });
+}
+
+function collectSlots() {
+  const container = document.getElementById('slotRows');
+  if (!container) return [];
+  const slots = [];
+  container.querySelectorAll('.schedule-slot-row').forEach(row => {
+    const selectedDay = row.querySelector('.day-btn.selected');
+    const timeInp = row.querySelector('.slot-time-input');
+    const day = selectedDay ? selectedDay.textContent.trim() : '';
+    const time = timeInp ? timeInp.value : '';
+    if (day) slots.push({ day, time });
+  });
+  return slots;
+}
+
+function saveSchedule() {
+  const slots = collectSlots();
+  const s = getActive();
+  s.schedule = { slots };
+  save(); renderSidebar(); renderMain();
+}
+
+function clearSchedule() {
+  const s = getActive();
+  s.schedule = { slots: [] };
+  save(); renderSidebar(); renderMain();
+}
+
+function toggleScheduleEditor() {
+  const editor = document.getElementById('scheduleEditor');
+  if (!editor) return;
+  editor.classList.toggle('open');
+}
+
+function addPayment(paid) {
+  const dateInp = document.getElementById('newFinDate');
+  const amountInp = document.getElementById('newFinAmount');
+  const amount = parseFloat(amountInp.value);
+  if (!dateInp.value || isNaN(amount) || amount <= 0) { amountInp.focus(); return; }
+  const s = getActive();
+  if (!s.payments) s.payments = [];
+  s.payments.push({ id: uid(), date: dateInp.value, amount, paid });
+  save(); renderSidebar(); renderMain();
+}
+
+function togglePayment(id) {
+  const s = getActive();
+  const p = (s.payments || []).find(x => x.id === id);
+  if (!p) return;
+  p.paid = !p.paid;
+  save(); renderSidebar(); renderMain();
+}
+
+function removePayment(id) {
+  const s = getActive();
+  s.payments = (s.payments || []).filter(x => x.id !== id);
+  save(); renderSidebar(); renderMain();
+}
+
+// ─── MISTAKES BANK ───────────────────────────────────────────────────────────
+function renderMistakesPanel(s) {
+  const sorted = [...(s.mistakes || [])].sort((a, b) => b.date.localeCompare(a.date));
+  const rows = sorted.map(m => `
+    <div class="mistake-row">
+      <span class="mistake-icon">🧩</span>
+      <div style="flex:1">
+        <div class="mistake-text">${esc(m.text)}</div>
+        <div class="mistake-date">${formatDate(m.date)}</div>
+      </div>
+      <button class="btn-remove-item" onclick="removeMistake('${m.id}')">×</button>
+    </div>
+  `).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-head"><h2>Банк типовых ошибок</h2></div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:14px">
+        Сюда стоит заносить повторяющиеся ошибки ученика — то, что стоит проверять перед каждой контрольной или экзаменом.
+      </div>
+      <div class="topics-list">
+        ${rows || '<div class="empty-state"><div class="icon">🧩</div><p>Типовых ошибок пока не зафиксировано</p></div>'}
+      </div>
+      <div class="mistake-add-row">
+        <textarea id="newMistakeInput" placeholder="Опишите ошибку, например: путает знаки при переносе через равно..."
+          onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();addMistake();}"></textarea>
+        <button class="btn-add" onclick="addMistake()">+ Добавить</button>
+      </div>
+    </div>`;
+}
+
+function addMistake() {
+  const inp = document.getElementById('newMistakeInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  const s = getActive();
+  if (!s.mistakes) s.mistakes = [];
+  s.mistakes.push({ id: uid(), text, date: todayStr() });
+  save(); renderMain();
+  setTimeout(() => { const el = document.getElementById('newMistakeInput'); if (el) el.focus(); }, 50);
+}
+
+function removeMistake(id) {
+  const s = getActive();
+  s.mistakes = (s.mistakes || []).filter(x => x.id !== id);
+  save(); renderMain();
+}
+
+// ─── LINKS ────────────────────────────────────────────────────────────────────
+function normalizeUrl(u) {
+  u = u.trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  return u;
+}
+function hostnameOf(u) {
+  try { return new URL(u).hostname.replace(/^www\./, ''); }
+  catch(e) { return u; }
+}
+
+function renderLinksPanel(s) {
+  const boardHtml = s.boardUrl ? `
+    <div class="board-pin">
+      <div class="board-pin-icon">🖊️</div>
+      <div class="board-pin-body">
+        <div class="board-pin-label">📌 Онлайн-доска</div>
+        <div class="board-pin-url">${esc(hostnameOf(s.boardUrl))} — ${esc(s.boardUrl)}</div>
+      </div>
+      <div class="board-pin-actions">
+        <a class="board-pin-btn edit-btn" href="${esc(s.boardUrl)}" target="_blank" rel="noopener noreferrer">Открыть ↗</a>
+        <button class="board-pin-btn" onclick="showBoardUrlEditor()">✏ Изменить</button>
+      </div>
+    </div>
+    <div id="boardUrlEditor" style="display:none;margin-top:10px">
+      ${boardUrlEditorHtml(s.boardUrl)}
+    </div>` : `
+    <div class="board-pin">
+      <div class="board-pin-icon">🖊️</div>
+      <div class="board-pin-body">
+        <div class="board-pin-label">📌 Онлайн-доска</div>
+        <div class="board-pin-empty">Ссылка ещё не добавлена</div>
+      </div>
+      <div class="board-pin-actions">
+        <button class="board-pin-btn edit-btn" onclick="showBoardUrlEditor()">+ Добавить ссылку</button>
+      </div>
+    </div>
+    <div id="boardUrlEditor" style="display:none;margin-top:10px">
+      ${boardUrlEditorHtml('')}
+    </div>`;
+
+  const linkItems = (s.links || []).map(l => `
+    <div class="link-row">
+      <div class="link-icon">🔗</div>
+      <div class="link-body">
+        <div class="link-title">${esc(l.title || hostnameOf(l.url))}</div>
+        <span class="link-url">${esc(l.url)}</span>
+      </div>
+      <a class="link-open-btn" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">Открыть ↗</a>
+      <button class="btn-remove-item" onclick="removeLink('${l.id}')">×</button>
+    </div>
+  `).join('');
+
+  return `
+    ${boardHtml}
+    <div class="section-card">
+      <div class="section-head"><h2>Прочие ссылки и материалы</h2></div>
+      <div class="topics-list">
+        ${linkItems || '<div class="empty-state"><div class="icon">🔗</div><p>Ссылок пока нет — добавьте материалы, презентации, тренажёры</p></div>'}
+      </div>
+      <div class="link-add-row">
+        <input type="text" id="newLinkTitle" class="link-title-input" placeholder="Название (необязательно)">
+        <input type="text" id="newLinkUrl" class="link-url-input" placeholder="https://..." onkeydown="if(event.key==='Enter')addLink()">
+        <button class="btn-add" onclick="addLink()">+ Добавить</button>
+      </div>
+    </div>`;
+}
+
+function boardUrlEditorHtml(current) {
+  return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <input id="boardUrlInput" type="text" value="${esc(current)}"
+      placeholder="https://miro.com/..."
+      style="flex:1;min-width:220px;border:1.5px solid var(--indigo);border-radius:8px;
+        padding:9px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+        background:var(--surface);color:var(--text)"
+      onkeydown="if(event.key==='Enter')saveBoardUrl();if(event.key==='Escape')hideBoardUrlEditor();">
+    <button class="btn-add" onclick="saveBoardUrl()">Сохранить</button>
+    <button class="btn-secondary" onclick="hideBoardUrlEditor()">Отмена</button>
+  </div>`;
+}
+
+function showBoardUrlEditor() {
+  const editor = document.getElementById('boardUrlEditor');
+  if (!editor) return;
+  editor.style.display = 'block';
+  const inp = document.getElementById('boardUrlInput');
+  if (inp) { inp.focus(); inp.select(); }
+}
+
+function hideBoardUrlEditor() {
+  const editor = document.getElementById('boardUrlEditor');
+  if (editor) editor.style.display = 'none';
+}
+
+function saveBoardUrl() {
+  const inp = document.getElementById('boardUrlInput');
+  if (!inp) return;
+  const s = getActive();
+  s.boardUrl = normalizeUrl(inp.value);
+  save(); renderMain();
+  // renderMain() re-renders the links tab (activeTab stays 'links')
+}
+
+function addLink() {
+  const titleInp = document.getElementById('newLinkTitle');
+  const urlInp = document.getElementById('newLinkUrl');
+  const url = normalizeUrl(urlInp.value);
+  if (!url) { urlInp.focus(); return; }
+  const s = getActive();
+  if (!s.links) s.links = [];
+  s.links.push({ id: uid(), title: titleInp.value.trim(), url });
+  save(); renderMain();
+  setTimeout(() => { const el = document.getElementById('newLinkUrl'); if (el) el.focus(); }, 50);
+}
+
+function removeLink(id) {
+  const s = getActive();
+  s.links = (s.links || []).filter(x => x.id !== id);
+  save(); renderMain();
+}
+
+// ─── STUDENT MODAL ───────────────────────────────────────────────────────────
+let editingStudentId = null;
+let selectedColor = COLORS[0];
+
+function openAddStudentModal() {
+  editingStudentId = null;
+  selectedColor = COLORS[0];
+  document.getElementById('modalTitle').textContent = 'Новый ученик';
+  document.getElementById('inputName').value = '';
+  document.getElementById('inputSubject').value = '';
+  document.getElementById('saveStudentBtn').textContent = 'Добавить';
+  renderColorSwatches();
+  document.getElementById('studentModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('inputName').focus(), 50);
+}
+
+function openEditStudentModal() {
+  const s = getActive();
+  editingStudentId = s.id;
+  selectedColor = s.color;
+  document.getElementById('modalTitle').textContent = 'Редактировать ученика';
+  document.getElementById('inputName').value = s.name;
+  document.getElementById('inputSubject').value = s.subject;
+  document.getElementById('saveStudentBtn').textContent = 'Сохранить';
+  renderColorSwatches();
+  document.getElementById('studentModal').classList.remove('hidden');
+}
+
+function closeStudentModal() {
+  document.getElementById('studentModal').classList.add('hidden');
+}
+
+function renderColorSwatches() {
+  const wrap = document.getElementById('colorSwatches');
+  wrap.innerHTML = COLORS.map(c => `
+    <div class="swatch ${c===selectedColor?'selected':''}"
+      style="background:${c}"
+      onclick="pickColor('${c}')"></div>
+  `).join('');
+}
+
+function pickColor(c) {
+  selectedColor = c;
+  renderColorSwatches();
+}
+
+function saveStudent() {
+  const name = document.getElementById('inputName').value.trim();
+  const subject = document.getElementById('inputSubject').value.trim();
+  if (!name) { document.getElementById('inputName').focus(); return; }
+  if (!subject) { document.getElementById('inputSubject').focus(); return; }
+
+  if (editingStudentId) {
+    const s = state.students.find(x => x.id === editingStudentId);
+    s.name = name; s.subject = subject; s.color = selectedColor;
+  } else {
+    const s = {
+      id: uid(), name, subject, color: selectedColor,
+      topics: [], attendance: [], homework: [], boardUrl: '', links: [],
+      hourlyRate: 1500, payments: [], mistakes: [], schedule: { slots: [] }
+    };
+    state.students.push(s);
+    state.activeId = s.id;
+    state.view = 'student';
+  }
+  save();
+  closeStudentModal();
+  renderSidebar();
+  if (state.view === 'student' && state.activeId) renderMain();
+  else renderDashboard();
+}
+
+function deleteStudent() {
+  const s = getActive();
+  // Show inline confirmation banner instead of confirm()
+  const existing = document.getElementById('deleteStudentConfirm');
+  if (existing) { existing.remove(); return; }
+  const banner = document.createElement('div');
+  banner.id = 'deleteStudentConfirm';
+  banner.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--surface);border:1.5px solid var(--red);border-radius:12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.15);padding:16px 20px;z-index:250;
+    display:flex;align-items:center;gap:12px;max-width:90vw;`;
+  banner.innerHTML = `
+    <span style="font-size:14px;color:var(--text)">Удалить ученика <b>${esc(s.name)}</b>? Данные не восстановить.</span>
+    <button style="background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 14px;
+      font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif"
+      onclick="confirmDeleteStudent()">Удалить</button>
+    <button class="btn-secondary" style="padding:7px 12px;font-size:13px"
+      onclick="document.getElementById('deleteStudentConfirm').remove()">Отмена</button>
+  `;
+  document.body.appendChild(banner);
+}
+
+function confirmDeleteStudent() {
+  const banner = document.getElementById('deleteStudentConfirm');
+  if (banner) banner.remove();
+  state.students = state.students.filter(x => x.id !== state.activeId);
+  state.activeId = null;
+  state.view = 'dashboard';
+  save(); renderSidebar(); showDashboard();
+}
+
+// ─── PARENT REPORT EXPORT ─────────────────────────────────────────────────────
+function exportStudentReport(studentId) {
+  const s = state.students.find(x => x.id === studentId);
+  if (!s) return;
+
+  const today = todayStr();
+  const topicsDone = s.topics.filter(t => t.done).length;
+  const topicsTotal = s.topics.length;
+  const pastAtt = s.attendance.filter(a => a.date <= today);
+  const attPresent = pastAtt.filter(a => a.present).length;
+  const hwDone = s.homework.filter(h => h.status === 'done').length;
+  const hwTotal = s.homework.length;
+  const unpaidSum = (s.payments || []).filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+
+  const topicsListHtml = s.topics.map(t => `
+    <tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${esc(t.text)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">${t.done ? '✅ Пройдено' : '⏳ В планах'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;color:#888">${t.done && t.doneDate ? formatDate(t.doneDate) : (t.planDate ? formatDate(t.planDate) : '—')}</td>
+    </tr>`).join('');
+
+  const attListHtml = pastAtt.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a => `
+    <tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${formatDate(a.date)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">${a.present ? '✅ Был на занятии' : '❌ Пропустил'}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;color:#888">${a.note ? esc(a.note) : '—'}</td>
+    </tr>`).join('');
+
+  const hwListHtml = s.homework.map(h => `
+    <tr>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee">${esc(h.text)}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">${h.status === 'done' ? '✅ Выполнено' : (h.due && h.due < today ? '⚠️ Просрочено' : '⏳ Не сдано')}</td>
+      <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;color:#888">${h.due ? formatDate(h.due) : '—'}</td>
+    </tr>`).join('');
+
+  const mistakesHtml = (s.mistakes || []).map(m => `<li style="margin-bottom:6px">${esc(m.text)} <span style="color:#999;font-size:12px">(${formatDate(m.date)})</span></li>`).join('');
+
+  const reportHtml = `<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>Отчёт — ${esc(s.name)}</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; color:#3a2030; max-width:760px; margin:0 auto; padding:32px 24px; }
+  h1 { font-size:22px; margin-bottom:2px; }
+  .sub { color:#888; font-size:13px; margin-bottom:24px; }
+  .stats { display:flex; gap:16px; margin-bottom:28px; flex-wrap:wrap; }
+  .stat { flex:1; min-width:140px; background:#FBEEF4; border-radius:10px; padding:14px 16px; }
+  .stat .label { font-size:11px; color:#A0576E; text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+  .stat .value { font-size:22px; font-weight:800; margin-top:4px; }
+  h2 { font-size:16px; margin:28px 0 10px; border-bottom:2px solid #F2E3EB; padding-bottom:6px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; font-size:11px; text-transform:uppercase; color:#999; padding:6px 10px; }
+  ul { font-size:13px; padding-left:20px; }
+  .footer { margin-top:32px; font-size:12px; color:#aaa; text-align:center; }
+  @media print { body { padding:0 8px; } }
+</style></head>
+<body>
+  <h1>Отчёт об успеваемости — ${esc(s.name)}</h1>
+  <div class="sub">${esc(s.subject)} · сформировано ${formatDate(today)}</div>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Темы пройдены</div><div class="value">${topicsDone}/${topicsTotal}</div></div>
+    <div class="stat"><div class="label">Посещаемость</div><div class="value">${attPresent}/${pastAtt.length}</div></div>
+    <div class="stat"><div class="label">ДЗ выполнено</div><div class="value">${hwDone}/${hwTotal}</div></div>
+    ${unpaidSum > 0 ? `<div class="stat" style="background:#FCF1F1"><div class="label" style="color:#C2548A">Задолженность</div><div class="value" style="color:#E08A8A">${unpaidSum.toLocaleString('ru-RU')} ₽</div></div>` : ''}
+  </div>
+
+  <h2>Программа обучения</h2>
+  <table><tr><th>Тема</th><th>Статус</th><th>Дата</th></tr>${topicsListHtml || '<tr><td colspan="3" style="color:#999;padding:8px 10px">Темы пока не добавлены</td></tr>'}</table>
+
+  <h2>Посещаемость</h2>
+  <table><tr><th>Дата</th><th>Статус</th><th>Заметка</th></tr>${attListHtml || '<tr><td colspan="3" style="color:#999;padding:8px 10px">Записей пока нет</td></tr>'}</table>
+
+  <h2>Домашние задания</h2>
+  <table><tr><th>Задание</th><th>Статус</th><th>Срок</th></tr>${hwListHtml || '<tr><td colspan="3" style="color:#999;padding:8px 10px">Заданий пока нет</td></tr>'}</table>
+
+  ${(s.mistakes || []).length ? `<h2>На что обратить внимание</h2><ul>${mistakesHtml}</ul>` : ''}
+
+  <div class="footer">Отчёт сформирован автоматически в журнале репетитора</div>
+</body></html>`;
+
+  const blob = new Blob([reportHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Отчёт — ${s.name} — ${formatDate(today)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function getActive() { return state.students.find(x => x.id === state.activeId); }
+function initials(name) {
+  return name.trim().split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join('');
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+function formatDate(iso) {
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+// Close modal on overlay click
+document.getElementById('studentModal').addEventListener('click', function(e) {
+  if (e.target === this) closeStudentModal();
+});
+</script>
+
+</div><!-- /#appRoot -->
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay hidden" id="changePwdModal">
+  <div class="modal" style="max-width:360px">
+    <h3>🔑 Сменить пароль</h3>
+    <div class="form-group">
+      <label>Текущий пароль</label>
+      <input type="password" id="cpwdCurrent" placeholder="Текущий пароль">
+    </div>
+    <div class="form-group">
+      <label>Новый пароль</label>
+      <input type="password" id="cpwdNew" placeholder="Не менее 4 символов">
+    </div>
+    <div class="form-group">
+      <label>Повторите новый пароль</label>
+      <input type="password" id="cpwdRepeat" placeholder="Повторите пароль">
+    </div>
+    <div id="cpwdError" style="color:var(--red);font-size:13px;font-weight:600;min-height:18px;margin-bottom:4px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('changePwdModal').classList.add('hidden')">Отмена</button>
+      <button class="btn-primary" onclick="submitChangePassword()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+</body></html>
