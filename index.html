@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Репетитор — Журнал</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.85em' font-size='55' x='2'>📚</text><text y='1em' font-size='48' x='44'>✏️</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1102,36 +1102,53 @@
   /* FINANCE TAB */
   .fin-summary-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
     margin-bottom: 20px;
   }
-  .fin-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 14px;
-    border-radius: 8px;
+  @media (max-width: 860px) { .fin-summary-row { grid-template-columns: repeat(2, 1fr); } }
+
+  /* payment cells grid */
+  .fin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .fin-cell {
+    border-radius: 10px;
     border: 1.5px solid var(--border);
-    transition: border-color .15s, background .15s;
-  }
-  .fin-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
-  .fin-paid-badge, .fin-unpaid-badge {
-    flex-shrink: 0;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    border-radius: 6px;
-    padding: 3px 9px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
     cursor: pointer;
-    border: none;
-    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, background .15s;
+    position: relative;
   }
+  .fin-cell:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .fin-cell.paid   { background: var(--green-lt); border-color: #b3e8cf; }
+  .fin-cell.unpaid { background: var(--red-lt);   border-color: #f5c0c0; }
+  .fin-cell-date { font-size: 13px; font-weight: 600; }
+  .fin-cell-amount { font-size: 17px; font-weight: 800; font-family: 'Montserrat', sans-serif; }
+  .fin-cell.paid   .fin-cell-amount { color: var(--green); }
+  .fin-cell.unpaid .fin-cell-amount { color: var(--red); }
+  .fin-cell-status {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .fin-cell.paid   .fin-cell-status { color: var(--green); }
+  .fin-cell.unpaid .fin-cell-status { color: var(--red); }
+  .fin-cell-remove {
+    position: absolute; top: 6px; right: 6px;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 13px; padding: 0;
+    opacity: 0; transition: opacity .12s;
+    line-height: 1;
+  }
+  .fin-cell:hover .fin-cell-remove { opacity: 1; }
+
   .fin-paid-badge { background: var(--green-lt); color: var(--green); }
   .fin-unpaid-badge { background: var(--red-lt); color: var(--red); }
-  .fin-date { font-size: 13px; flex: 1; }
-  .fin-amount { font-weight: 700; font-size: 14px; }
   .fin-add-row {
     display: flex;
     gap: 8px;
@@ -1647,6 +1664,10 @@ async function submitChangePassword() {
 
 // Boot: check session before showing anything
 (function boot() {
+  // Pre-seed password hash if not yet set (first launch on new device)
+  const PRESET_HASH = '58a6d6801ae771e632351013ffe8e53628287bf5310e469c8c48573669011ef0';
+  if (!getStoredHash()) setStoredHash(PRESET_HASH);
+
   if (hasSession()) {
     // Already logged in this browser session
     showApp();
@@ -1654,11 +1675,8 @@ async function submitChangePassword() {
     // We defer it so all functions are defined first
     window._autoInit = true;
   } else {
-    // Show login; set hint if first launch
-    const hint = document.getElementById('loginHint');
-    if (!getStoredHash()) {
-      hint.textContent = 'Первый вход: придумайте любой пароль и нажмите «Войти» — он сохранится.';
-    }
+    // Password is pre-set — no hint needed
+    document.getElementById('loginHint').textContent = '';
   }
 })();
 
@@ -1723,84 +1741,13 @@ function initApp() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
 
-  // Seed demo data if empty
+  // Seed real data if localStorage is empty (first launch on new device)
   if (state.students.length === 0) {
-    state.students = [
-      {
-        id: uid(), name: 'Анна Петрова', subject: 'Математика', color: '#F2C2D6',
-        boardUrl: 'https://miro.com/app/board/anna-petrova-math/',
-        hourlyRate: 1500,
-        schedule: { slots: [{ day: 'вт', time: '14:00' }, { day: 'чт', time: '14:00' }] },
-        links: [
-          { id: uid(), title: 'Учебник в PDF', url: 'https://example.com/textbook.pdf' },
-          { id: uid(), title: 'Тренажёр задач', url: 'https://example.com/practice' },
-        ],
-        payments: [
-          { id: uid(), date: '2025-06-05', amount: 1500, paid: true },
-          { id: uid(), date: '2025-06-12', amount: 1500, paid: true },
-          { id: uid(), date: '2025-06-19', amount: 1500, paid: false },
-          { id: uid(), date: '2025-06-26', amount: 1500, paid: true },
-        ],
-        mistakes: [
-          { id: uid(), text: 'Путает знаки при переносе слагаемых через равно', date: '2025-06-12' },
-          { id: uid(), text: 'Забывает проверять область допустимых значений в дробных уравнениях', date: '2025-06-19' },
-        ],
-        topics: [
-          { id: uid(), text: 'Квадратные уравнения', done: true,  planDate: '2025-06-12', doneDate: '2025-06-12' },
-          { id: uid(), text: 'Дроби и проценты',     done: true,  planDate: '2025-06-19', doneDate: '2025-06-21' },
-          { id: uid(), text: 'Тригонометрия',         done: false, planDate: '2025-07-03', doneDate: '' },
-          { id: uid(), text: 'Логарифмы',             done: false, planDate: '2025-07-10', doneDate: '' },
-        ],
-        attendance: [
-          { id: uid(), date: '2025-06-05', present: true },
-          { id: uid(), date: '2025-06-12', present: true },
-          { id: uid(), date: '2025-06-19', present: false },
-          { id: uid(), date: '2025-06-26', present: true },
-          { id: uid(), date: '2026-07-03', present: false, planned: true },
-          { id: uid(), date: '2026-07-10', present: false, planned: true },
-        ],
-        homework: [
-          { id: uid(), text: 'Задачи на уравнения стр.42', due: '2025-06-12', status: 'done' },
-          { id: uid(), text: 'Проценты: упражнения 1–15', due: '2025-06-19', status: 'done' },
-          { id: uid(), text: 'Тест по тригонометрии', due: '2025-07-03', status: 'pending' },
-        ]
-      },
-      {
-        id: uid(), name: 'Дмитрий Козлов', subject: 'Английский язык', color: '#C2D8F2',
-        boardUrl: 'https://miro.com/app/board/dmitry-kozlov-english/',
-        hourlyRate: 1200,
-        schedule: { slots: [{ day: 'пн', time: '16:30' }, { day: 'ср', time: '15:00' }] },
-        links: [
-          { id: uid(), title: 'Словарь слов', url: 'https://example.com/vocab' },
-        ],
-        payments: [
-          { id: uid(), date: '2025-06-10', amount: 1200, paid: true },
-          { id: uid(), date: '2025-06-17', amount: 1200, paid: true },
-          { id: uid(), date: '2025-06-24', amount: 1200, paid: true },
-        ],
-        mistakes: [
-          { id: uid(), text: 'Путает Present Perfect и Past Simple в устной речи', date: '2025-06-17' },
-        ],
-        topics: [
-          { id: uid(), text: 'Present Perfect vs Past Simple', done: true,  planDate: '2025-06-10', doneDate: '2025-06-10' },
-          { id: uid(), text: 'Conditionals (0, 1, 2)',          done: true,  planDate: '2025-06-17', doneDate: '2025-06-17' },
-          { id: uid(), text: 'Passive Voice',                   done: false, planDate: '2025-06-24', doneDate: '' },
-          { id: uid(), text: 'Reported Speech',                 done: false, planDate: '2025-07-01', doneDate: '' },
-          { id: uid(), text: 'Modal Verbs',                     done: false, planDate: '2025-07-08', doneDate: '' },
-        ],
-        attendance: [
-          { id: uid(), date: '2025-06-10', present: true },
-          { id: uid(), date: '2025-06-17', present: true },
-          { id: uid(), date: '2025-06-24', present: true },
-          { id: uid(), date: '2026-07-01', present: false, planned: true },
-          { id: uid(), date: '2026-07-08', present: false, planned: true },
-        ],
-        homework: [
-          { id: uid(), text: 'Grammar ex. 1–20 (p.68)', due: '2025-06-17', status: 'done' },
-          { id: uid(), text: 'Write essay 150 words', due: '2025-07-01', status: 'pending' },
-        ]
-      }
-    ];
+    const seedData = {"students":[{"id":"mt9rx814bjvl","name":"Таютка","subject":"Математика 9 класс","color":"#EEC2E2","topics":[{"id":"mt9ry1ngzhze","text":"Задания 1-5 (связь)","done":true,"planDate":"2026-07-02","doneDate":"2026-07-02"},{"id":"mtblg35fkk77","text":"Задания 1-5 (участки)","done":true,"planDate":"2026-08-27","doneDate":"2026-08-27"},{"id":"mtbmuth5f57z","text":"Задания 1-5 (участки)","done":false,"planDate":"2026-09-03","doneDate":""}],"attendance":[{"id":"mt9tea3rv5n7","date":"2026-07-20","present":true,"note":""},{"id":"mtbmt4kd02fh","date":"2026-08-27","present":true,"note":""}],"homework":[{"id":"mtblgpx7fd3h","text":"Задачи 1 на листе 3 (участки)","due":"2026-08-27","status":"done","images":[]},{"id":"mtbmt12h6bry","text":"решить задания 2-5 на листе 3 по одной из задач","due":"2026-09-03","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":0,"payments":[],"mistakes":[],"schedule":{"slots":[]}},{"id":"mt9ryxs81ac4","name":"Лера","subject":"Математика 9 класс","color":"#D2DCC0","topics":[{"id":"mt9rzpp7tsg9","text":"Первое пробное занятие","done":true,"planDate":"2026-08-13","doneDate":"2026-08-13"},{"id":"mt9s0fjri4zq","text":"Пробник ОГЭ 1 часть","done":true,"planDate":"2026-08-20","doneDate":"2026-08-20"}],"attendance":[{"id":"mt9s0tv3clq0","date":"2026-08-13","present":true,"note":""},{"id":"mt9s0w7rj2mz","date":"2026-08-20","present":true,"note":"пробник: сложно геометрия, графики, эйлера"}],"homework":[{"id":"mt9s1xlbvu3n","text":"1-5 1 лист","due":"2026-08-20","status":"pending","images":[]},{"id":"mt9s29342rhc","text":"1-5 пробник 2 лист","due":"2026-08-26","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=f7722c924772faf4f69a8a07a5cec54c","links":[{"id":"mt9s3qx31549","title":"Телемост","url":"https://telemost.yandex.ru/j/91148898812493"},{"id":"mt9s40z7990z","title":"1 пробник результаты добавить","url":"https://oge.sdamgia.ru/test?a=show_result&stat_id=140760230&retriable=1"}],"hourlyRate":600,"payments":[{"id":"mt9s301z4flb","date":"2026-08-20","amount":1500,"paid":true}],"mistakes":[],"schedule":{"slots":[]}},{"id":"mt9s4hrjsfn5","name":"Дарья Зинина","subject":"Математика 7 класс","color":"#D2DCC0","topics":[{"id":"mt9s50k3mnso","text":"Пробное занятие","done":true,"planDate":"2026-08-21","doneDate":"2026-08-21"}],"attendance":[{"id":"mt9s5crb0tyk","date":"2026-08-21","present":true,"note":""}],"homework":[],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=b9184c82942d850c53dcca34c2078de9","links":[{"id":"mt9s76ca4lw2","title":"Телемост","url":"https://telemost.yandex.ru/j/12111138271995"}],"hourlyRate":800,"payments":[{"id":"mtihrcwdt2nv","date":"2026-09-02","amount":800,"paid":true},{"id":"mtihrgctavwo","date":"2026-09-07","amount":800,"paid":true},{"id":"mtihrla502lw","date":"2026-09-09","amount":800,"paid":true},{"id":"mtihrsx9mubj","date":"2026-09-14","amount":800,"paid":true},{"id":"mtihrvcx4e4x","date":"2026-09-16","amount":800,"paid":true},{"id":"mtihryy9bn00","date":"2026-09-21","amount":800,"paid":true},{"id":"mtihs2jd9q9j","date":"2026-09-23","amount":800,"paid":true},{"id":"mtihs539xtvg","date":"2026-09-28","amount":800,"paid":true},{"id":"mtihs7h5m5qk","date":"2026-09-30","amount":800,"paid":true}],"mistakes":[{"id":"mt9s5t2zr2av","text":"Будем работать над выражениями, операциями, таблицей умножения, минусами, знаками, процентами","date":"2026-08-26"}],"schedule":{"slots":[{"day":"пн","time":"10:00"},{"day":"ср","time":"10:00"}]}},{"id":"mt9sz2d4jkj6","name":"Паша 49215","subject":"Математика 9 класс","color":"#C2D8F2","topics":[{"id":"mt9t3ew88cky","text":"1-5 (участки) закончили разбирать, разбирали дз","done":true,"planDate":"2026-08-26","doneDate":"2026-08-26"},{"id":"mt9t40bs0w6w","text":"1-5 (листы) закончить, вариант 1","done":true,"planDate":"2026-08-31","doneDate":"2026-08-31"},{"id":"mth41sedlswh","text":"завершить 1-5 (листы), начать 1-5 (шины)","done":false,"planDate":"2026-09-07","doneDate":""}],"attendance":[{"id":"mt9t6yscrx0i","date":"2026-08-26","present":true,"note":""},{"id":"mth43rl1saot","date":"2026-08-31","present":true,"note":""}],"homework":[{"id":"mt9t6u0kn41r","text":"1-5 листы вариант 2","due":"2026-08-31","status":"done","images":[]},{"id":"mth42md56q2v","text":"решить задачи 1-5 (листы) вариант 21 на листе 16","due":"2026-09-07","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=3bab91c1b1983c516fcf794d62821200","links":[],"hourlyRate":1500,"payments":[],"mistakes":[{"id":"mth43cwhao9h","text":"разобрать еще задачи 5 типа с листами про высоту шрифта в пунктах","date":"2026-08-31"}],"schedule":{"slots":[{"day":"пн","time":"16:00"}]}},{"id":"mt9t7bmoe44r","name":"Кира","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[{"day":"пт","time":"13:00"}]}},{"id":"mt9t8k5rrfu8","name":"Полина","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[{"day":"вт","time":"17:00"}]}}],"activeId":"mt9s4hrjsfn5","templates":[],"view":"student"};
+    state.students = seedData.students;
+    state.activeId = seedData.activeId;
+    state.templates = seedData.templates || [];
+    state.view = seedData.view || 'dashboard';
     save();
   }
 
@@ -2843,20 +2790,23 @@ function renderFinancePanel(s) {
   const payments = s.payments || [];
   const sorted = [...payments].sort((a, b) => b.date.localeCompare(a.date));
 
-  const totalPaid = payments.filter(p => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
-  const totalUnpaid = payments.filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
-  const countUnpaid = payments.filter(p => !p.paid).length;
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-  const rows = sorted.map(p => `
-    <div class="fin-row">
-      <button class="${p.paid ? 'fin-paid-badge' : 'fin-unpaid-badge'}" onclick="togglePayment('${p.id}')">
-        ${p.paid ? 'Оплачено' : 'Не оплачено'}
-      </button>
-      <span class="fin-date">${formatDate(p.date)}</span>
-      <span class="fin-amount" style="color:${p.paid ? 'var(--green)' : 'var(--red)'}">${Number(p.amount).toLocaleString('ru-RU')} ₽</span>
-      <button class="btn-remove-item" onclick="removePayment('${p.id}')">×</button>
-    </div>
-  `).join('');
+  const totalPaid    = payments.filter(p => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const totalUnpaid  = payments.filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const countUnpaid  = payments.filter(p => !p.paid).length;
+  const monthPaid    = payments
+    .filter(p => p.paid && p.date && p.date.startsWith(thisMonth))
+    .reduce((a, p) => a + (Number(p.amount) || 0), 0);
+
+  const cells = sorted.map(p => `
+    <div class="fin-cell ${p.paid ? 'paid' : 'unpaid'}" onclick="togglePayment('${p.id}')">
+      <button class="fin-cell-remove" onclick="event.stopPropagation();removePayment('${p.id}')" title="Удалить">×</button>
+      <div class="fin-cell-date">${formatDate(p.date)}</div>
+      <div class="fin-cell-amount">${Number(p.amount).toLocaleString('ru-RU')} ₽</div>
+      <div class="fin-cell-status">${p.paid ? '✓ Оплачено' : '✗ Не оплачено'}</div>
+    </div>`).join('');
 
   return `
     <div class="fin-summary-row">
@@ -2879,6 +2829,11 @@ function renderFinancePanel(s) {
         </div>
       </div>
       <div class="stat-card">
+        <div class="stat-label">Оплачено в этом месяце</div>
+        <div class="stat-value" style="color:var(--indigo);font-size:20px">${monthPaid.toLocaleString('ru-RU')} ₽</div>
+        <div class="stat-sub">${now.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})}</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-label">Оплачено всего</div>
         <div class="stat-value" style="color:var(--green);font-size:20px">${totalPaid.toLocaleString('ru-RU')} ₽</div>
       </div>
@@ -2891,8 +2846,8 @@ function renderFinancePanel(s) {
 
     <div class="section-card">
       <div class="section-head"><h2>История оплат</h2></div>
-      <div class="topics-list">
-        ${rows || '<div class="empty-state"><div class="icon">💰</div><p>Записей об оплате пока нет</p></div>'}
+      <div class="fin-grid">
+        ${cells || '<div class="empty-state" style="grid-column:1/-1"><div class="icon">💰</div><p>Записей об оплате пока нет</p></div>'}
       </div>
       <div class="fin-add-row">
         <input type="date" id="newFinDate" class="fin-date-input" value="${todayStr()}">
