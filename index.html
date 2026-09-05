@@ -1244,7 +1244,69 @@
   }
   .template-apply-btn:hover { background: #A8487A; }
 
-  /* PRINT REPORT (hidden helper iframe content uses inline styles) */
+  /* DURATION SELECT in schedule slot row */
+  .slot-duration-select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    min-width: 90px;
+  }
+  .slot-duration-select:focus { border-color: var(--indigo); }
+
+  /* RESULTS TAB */
+  .result-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: border-color .15s, box-shadow .15s;
+    background: var(--surface);
+  }
+  .result-card:hover { border-color: var(--indigo); box-shadow: var(--shadow); }
+  .result-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .result-score-badge {
+    flex-shrink: 0;
+    min-width: 52px;
+    text-align: center;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .result-score-badge .score-max { font-size: 11px; font-weight: 600; opacity: .7; }
+  .result-body { flex: 1; min-width: 0; }
+  .result-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+  .result-meta { font-size: 12px; color: var(--muted); }
+  .result-comment { font-size: 13px; color: var(--muted); margin-top: 8px; font-style: italic; }
+  .result-images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .result-thumb-wrap { position: relative; display: inline-block; }
+  .result-thumb {
+    width: 80px; height: 80px; object-fit: cover;
+    border-radius: 8px; border: 1.5px solid var(--border);
+    cursor: pointer; display: block; transition: opacity .15s;
+  }
+  .result-thumb:hover { opacity: .85; }
+  .result-thumb-del {
+    position: absolute; top: -6px; right: -6px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); color: #fff; border: none;
+    cursor: pointer; font-size: 11px; font-weight: 700;
+    display: none; align-items: center; justify-content: center; padding: 0;
+  }
+  .result-thumb-wrap:hover .result-thumb-del { display: flex; }
+
+  /* score color variants */
+  .score-high { background: var(--green-lt); color: var(--green); }
+  .score-mid  { background: var(--amber-lt); color: var(--amber); }
+  .score-low  { background: var(--red-lt);   color: var(--red); }
+  .score-none { background: var(--indigo-lt); color: var(--indigo); }
   .btn-export {
     background: none;
     border: 1.5px solid var(--border);
@@ -1709,10 +1771,10 @@ function load() {
         if (!('payments' in s)) s.payments = [];
         if (!('mistakes' in s)) s.mistakes = [];
         if (!('schedule' in s)) s.schedule = { slots: [] };
-        // migrate old format {days,time} → {slots}
         else if (!Array.isArray(s.schedule.slots)) {
           s.schedule = { slots: normalizeSchedule(s.schedule) };
         }
+        if (!('results' in s)) s.results = [];
         (s.topics || []).forEach(t => {
           if (!('planDate' in t)) t.planDate = '';
           if (!('doneDate' in t)) {
@@ -1743,7 +1805,7 @@ function initApp() {
 
   // Seed real data if localStorage is empty (first launch on new device)
   if (state.students.length === 0) {
-    const seedData = {"students":[{"id":"mt9rx814bjvl","name":"Таютка","subject":"Математика 9 класс","color":"#EEC2E2","topics":[{"id":"mt9ry1ngzhze","text":"Задания 1-5 (связь)","done":true,"planDate":"2026-07-02","doneDate":"2026-07-02"},{"id":"mtblg35fkk77","text":"Задания 1-5 (участки)","done":true,"planDate":"2026-08-27","doneDate":"2026-08-27"},{"id":"mtbmuth5f57z","text":"Задания 1-5 (участки)","done":false,"planDate":"2026-09-03","doneDate":""}],"attendance":[{"id":"mt9tea3rv5n7","date":"2026-07-20","present":true,"note":""},{"id":"mtbmt4kd02fh","date":"2026-08-27","present":true,"note":""}],"homework":[{"id":"mtblgpx7fd3h","text":"Задачи 1 на листе 3 (участки)","due":"2026-08-27","status":"done","images":[]},{"id":"mtbmt12h6bry","text":"решить задания 2-5 на листе 3 по одной из задач","due":"2026-09-03","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":0,"payments":[],"mistakes":[],"schedule":{"slots":[]}},{"id":"mt9ryxs81ac4","name":"Лера","subject":"Математика 9 класс","color":"#D2DCC0","topics":[{"id":"mt9rzpp7tsg9","text":"Первое пробное занятие","done":true,"planDate":"2026-08-13","doneDate":"2026-08-13"},{"id":"mt9s0fjri4zq","text":"Пробник ОГЭ 1 часть","done":true,"planDate":"2026-08-20","doneDate":"2026-08-20"}],"attendance":[{"id":"mt9s0tv3clq0","date":"2026-08-13","present":true,"note":""},{"id":"mt9s0w7rj2mz","date":"2026-08-20","present":true,"note":"пробник: сложно геометрия, графики, эйлера"}],"homework":[{"id":"mt9s1xlbvu3n","text":"1-5 1 лист","due":"2026-08-20","status":"pending","images":[]},{"id":"mt9s29342rhc","text":"1-5 пробник 2 лист","due":"2026-08-26","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=f7722c924772faf4f69a8a07a5cec54c","links":[{"id":"mt9s3qx31549","title":"Телемост","url":"https://telemost.yandex.ru/j/91148898812493"},{"id":"mt9s40z7990z","title":"1 пробник результаты добавить","url":"https://oge.sdamgia.ru/test?a=show_result&stat_id=140760230&retriable=1"}],"hourlyRate":600,"payments":[{"id":"mt9s301z4flb","date":"2026-08-20","amount":1500,"paid":true}],"mistakes":[],"schedule":{"slots":[]}},{"id":"mt9s4hrjsfn5","name":"Дарья Зинина","subject":"Математика 7 класс","color":"#D2DCC0","topics":[{"id":"mt9s50k3mnso","text":"Пробное занятие","done":true,"planDate":"2026-08-21","doneDate":"2026-08-21"}],"attendance":[{"id":"mt9s5crb0tyk","date":"2026-08-21","present":true,"note":""}],"homework":[],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=b9184c82942d850c53dcca34c2078de9","links":[{"id":"mt9s76ca4lw2","title":"Телемост","url":"https://telemost.yandex.ru/j/12111138271995"}],"hourlyRate":800,"payments":[{"id":"mtihrcwdt2nv","date":"2026-09-02","amount":800,"paid":true},{"id":"mtihrgctavwo","date":"2026-09-07","amount":800,"paid":true},{"id":"mtihrla502lw","date":"2026-09-09","amount":800,"paid":true},{"id":"mtihrsx9mubj","date":"2026-09-14","amount":800,"paid":true},{"id":"mtihrvcx4e4x","date":"2026-09-16","amount":800,"paid":true},{"id":"mtihryy9bn00","date":"2026-09-21","amount":800,"paid":true},{"id":"mtihs2jd9q9j","date":"2026-09-23","amount":800,"paid":true},{"id":"mtihs539xtvg","date":"2026-09-28","amount":800,"paid":true},{"id":"mtihs7h5m5qk","date":"2026-09-30","amount":800,"paid":true}],"mistakes":[{"id":"mt9s5t2zr2av","text":"Будем работать над выражениями, операциями, таблицей умножения, минусами, знаками, процентами","date":"2026-08-26"}],"schedule":{"slots":[{"day":"пн","time":"10:00"},{"day":"ср","time":"10:00"}]}},{"id":"mt9sz2d4jkj6","name":"Паша 49215","subject":"Математика 9 класс","color":"#C2D8F2","topics":[{"id":"mt9t3ew88cky","text":"1-5 (участки) закончили разбирать, разбирали дз","done":true,"planDate":"2026-08-26","doneDate":"2026-08-26"},{"id":"mt9t40bs0w6w","text":"1-5 (листы) закончить, вариант 1","done":true,"planDate":"2026-08-31","doneDate":"2026-08-31"},{"id":"mth41sedlswh","text":"завершить 1-5 (листы), начать 1-5 (шины)","done":false,"planDate":"2026-09-07","doneDate":""}],"attendance":[{"id":"mt9t6yscrx0i","date":"2026-08-26","present":true,"note":""},{"id":"mth43rl1saot","date":"2026-08-31","present":true,"note":""}],"homework":[{"id":"mt9t6u0kn41r","text":"1-5 листы вариант 2","due":"2026-08-31","status":"done","images":[]},{"id":"mth42md56q2v","text":"решить задачи 1-5 (листы) вариант 21 на листе 16","due":"2026-09-07","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=3bab91c1b1983c516fcf794d62821200","links":[],"hourlyRate":1500,"payments":[],"mistakes":[{"id":"mth43cwhao9h","text":"разобрать еще задачи 5 типа с листами про высоту шрифта в пунктах","date":"2026-08-31"}],"schedule":{"slots":[{"day":"пн","time":"16:00"}]}},{"id":"mt9t7bmoe44r","name":"Кира","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[{"day":"пт","time":"13:00"}]}},{"id":"mt9t8k5rrfu8","name":"Полина","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[{"day":"вт","time":"17:00"}]}}],"activeId":"mt9s4hrjsfn5","templates":[],"view":"student"};
+    const seedData = {"students":[{"id":"mt9rx814bjvl","name":"Таютка","subject":"Математика 9 класс","color":"#EEC2E2","topics":[{"id":"mt9ry1ngzhze","text":"Задания 1-5 (связь)","done":true,"planDate":"2026-07-02","doneDate":"2026-07-02"},{"id":"mtblg35fkk77","text":"Задания 1-5 (участки)","done":true,"planDate":"2026-08-27","doneDate":"2026-08-27"},{"id":"mtbmuth5f57z","text":"Задания 1-5 (участки)","done":true,"planDate":"2026-09-03","doneDate":"2026-09-03"},{"id":"mtl99dhzm96h","text":"Задания 1-5 (листы)","done":false,"planDate":"2026-09-06","doneDate":""}],"attendance":[{"id":"mt9tea3rv5n7","date":"2026-07-20","present":true,"note":""},{"id":"mtbmt4kd02fh","date":"2026-08-27","present":true,"note":""},{"id":"mtl8uyoikdbx","date":"2026-09-03","present":true,"note":"завершили участки"},{"id":"mtl99rzncha8","date":"2026-09-06","present":false,"planned":true,"note":""}],"homework":[{"id":"mtblgpx7fd3h","text":"Задачи 1 на листе 3 (участки)","due":"2026-08-27","status":"done","images":[]},{"id":"mtbmt12h6bry","text":"решить задания 2-5 на листе 3 по одной из задач","due":"2026-09-03","status":"pending","images":[]},{"id":"mtl93qnntvoa","text":"Решить задачи 1-5 вариант 9 из сборника Ященко","due":"2026-09-10","status":"pending","images":[]}],"boardUrl":"","links":[{"id":"mtl689t52o59","title":"Телемост","url":"https://telemost.yandex.ru/j/04567774560275"}],"hourlyRate":0,"payments":[],"mistakes":[],"schedule":{"slots":[]}},{"id":"mt9ryxs81ac4","name":"Лера","subject":"Математика 9 класс","color":"#D2DCC0","topics":[{"id":"mt9rzpp7tsg9","text":"Первое пробное занятие","done":true,"planDate":"2026-08-13","doneDate":"2026-08-13"},{"id":"mt9s0fjri4zq","text":"Пробник ОГЭ 1 часть","done":true,"planDate":"2026-08-20","doneDate":"2026-08-20"},{"id":"mtmrxkscs2y6","text":"1-5 (участки) начали + разбирали дз","done":true,"planDate":"2026-09-04","doneDate":"2026-09-04"},{"id":"mtmtltqdln1v","text":"1-5 (участки) закончить","done":false,"planDate":"2026-09-08","doneDate":""}],"attendance":[{"id":"mt9s0tv3clq0","date":"2026-08-13","present":true,"note":""},{"id":"mt9s0w7rj2mz","date":"2026-08-20","present":true,"note":"пробник: сложно геометрия, графики, эйлера"},{"id":"mtmtle7tpb5z","date":"2026-09-04","present":true,"note":""}],"homework":[{"id":"mt9s1xlbvu3n","text":"1-5 1 лист","due":"2026-08-20","status":"done","images":[]},{"id":"mt9s29342rhc","text":"1-5 пробник 2 лист","due":"2026-08-26","status":"done","images":[]},{"id":"mtmthw6yimg3","text":"1-5 на листе 3","due":"2026-09-08","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=f7722c924772faf4f69a8a07a5cec54c","links":[{"id":"mt9s3qx31549","title":"Телемост","url":"https://telemost.yandex.ru/j/91148898812493"},{"id":"mt9s40z7990z","title":"1 пробник результаты добавить","url":"https://oge.sdamgia.ru/test?a=show_result&stat_id=140760230&retriable=1"}],"hourlyRate":600,"payments":[{"id":"mtjmazm4tagt","date":"2026-08-20","amount":1500,"paid":true}],"mistakes":[{"id":"mtjmibdok93e","text":"Геометрия сложно корни, графики","date":"2026-09-02"},{"id":"mtjmilhn6t4q","text":"прошла участки, путь","date":"2026-09-02"}],"schedule":{"slots":[{"day":"вт","time":"15:30"},{"day":"пт","time":"16:00"}]}},{"id":"mt9s4hrjsfn5","name":"Дарья Зинина","subject":"Математика 7 класс","color":"#D2DCC0","topics":[{"id":"mt9s50k3mnso","text":"Пробное занятие","done":true,"planDate":"2026-08-21","doneDate":"2026-08-21"},{"id":"mtjmda1ujlym","text":"Повторение 6 класса: таблица умножения, порядок действий, обыкновенные и десятичные дроби, выражения","done":true,"planDate":"2026-09-02","doneDate":"2026-09-02"}],"attendance":[{"id":"mt9s5crb0tyk","date":"2026-08-21","present":true,"note":""},{"id":"mtjmeglytq6e","date":"2026-09-02","present":true,"note":""},{"id":"mtjmesby6i0f","date":"2026-09-07","present":false,"planned":true,"note":""},{"id":"mtjmevg2r99a","date":"2026-09-09","present":false,"planned":true,"note":""},{"id":"mtjmexvqo98r","date":"2026-09-14","present":false,"planned":true,"note":""},{"id":"mtjmezuinzr8","date":"2026-09-16","present":false,"planned":true,"note":""},{"id":"mtjmf2926l26","date":"2026-09-21","present":false,"planned":true,"note":""},{"id":"mtjmf416e1xw","date":"2026-09-23","present":false,"planned":true,"note":""},{"id":"mtjmf5wut2rg","date":"2026-09-28","present":false,"planned":true,"note":""},{"id":"mtjmf7n24w2f","date":"2026-09-30","present":false,"planned":true,"note":""}],"homework":[{"id":"mtjme75yvqos","text":"Лист 2, дз отмечено галочками (выражения, дроби)","due":"2026-09-07","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=b9184c82942d850c53dcca34c2078de9","links":[{"id":"mt9s76ca4lw2","title":"Телемост","url":"https://telemost.yandex.ru/j/12111138271995"},{"id":"mtjrxsnk27jp","title":"Алгебра 2024","url":"https://so.11klasov.net/9590-algebra-7-klass-uchebnik-makarychev-jun-mindjuk-ng-i-dr.html"},{"id":"mtjrzwf4mzhd","title":"Геометрия 2024","url":"https://so.11klasov.net/20711-matematika-geometrija-7-9-klassy-bazovyj-uroven-uchebnik-atanasjan-ls-butuzov-vf-kadomcev-sb-i-dr.html"}],"hourlyRate":800,"payments":[{"id":"mtihrcwdt2nv","date":"2026-09-02","amount":800,"paid":true},{"id":"mtihrgctavwo","date":"2026-09-07","amount":800,"paid":true},{"id":"mtihrla502lw","date":"2026-09-09","amount":800,"paid":true},{"id":"mtihrsx9mubj","date":"2026-09-14","amount":800,"paid":true},{"id":"mtihrvcx4e4x","date":"2026-09-16","amount":800,"paid":true},{"id":"mtihryy9bn00","date":"2026-09-21","amount":800,"paid":true},{"id":"mtihs2jd9q9j","date":"2026-09-23","amount":800,"paid":true},{"id":"mtihs539xtvg","date":"2026-09-28","amount":800,"paid":true},{"id":"mtihs7h5m5qk","date":"2026-09-30","amount":800,"paid":true}],"mistakes":[{"id":"mt9s5t2zr2av","text":"Будем работать над выражениями, операциями, таблицей умножения, минусами, знаками, процентами","date":"2026-08-26"}],"schedule":{"slots":[{"day":"пн","time":"10:00"},{"day":"ср","time":"10:00"}]}},{"id":"mt9sz2d4jkj6","name":"Паша 49215","subject":"Математика 9 класс","color":"#C2D8F2","topics":[{"id":"mt9t3ew88cky","text":"1-5 (участки) закончили разбирать, разбирали дз","done":true,"planDate":"2026-08-26","doneDate":"2026-08-26"},{"id":"mt9t40bs0w6w","text":"1-5 (листы) закончить, вариант 1","done":true,"planDate":"2026-08-31","doneDate":"2026-08-31"},{"id":"mth41sedlswh","text":"завершить 1-5 (листы), начать 1-5 (шины)","done":false,"planDate":"2026-09-07","doneDate":""}],"attendance":[{"id":"mt9t6yscrx0i","date":"2026-08-26","present":true,"note":""},{"id":"mth43rl1saot","date":"2026-08-31","present":true,"note":""}],"homework":[{"id":"mt9t6u0kn41r","text":"1-5 листы вариант 2","due":"2026-08-31","status":"done","images":[]},{"id":"mth42md56q2v","text":"решить задачи 1-5 (листы) вариант 21 на листе 16","due":"2026-09-07","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=3bab91c1b1983c516fcf794d62821200","links":[],"hourlyRate":1500,"payments":[],"mistakes":[{"id":"mth43cwhao9h","text":"разобрать еще задачи 5 типа с листами про высоту шрифта в пунктах","date":"2026-08-31"}],"schedule":{"slots":[{"day":"пн","time":"16:00"}]}},{"id":"mt9t7bmoe44r","name":"Кира","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[{"day":"пт","time":"13:00"}]}},{"id":"mt9t8k5rrfu8","name":"Полина","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[{"day":"вт","time":"17:00"}]}}],"activeId":"mt9ryxs81ac4","templates":[],"view":"dashboard"};
     state.students = seedData.students;
     state.activeId = seedData.activeId;
     state.templates = seedData.templates || [];
@@ -1850,7 +1912,6 @@ function renderScheduleView() {
   const START_H = 8, END_H = 20, STEP = 10;
   const DAYS = ['пн','вт','ср','чт','пт','сб','вс'];
   const CELL_H = 22; // px per 10-min slot
-  const LESSON_DUR = 60; // assume 60-min lesson for display height
 
   // Today's day index (0=пн … 6=вс), js getDay: 0=sun,1=mon…
   const jsDay = new Date().getDay();
@@ -1864,14 +1925,14 @@ function renderScheduleView() {
     }
   }
 
-  // Build lookup: dayIndex → [{student, time}]
+  // Build lookup: dayIndex → [{student, time, duration}]
   const lessonsByDay = Array.from({length: 7}, () => []);
   state.students.forEach(s => {
     const slots = normalizeSchedule(s.schedule || {});
     slots.forEach(sl => {
       const di = DAYS.indexOf(sl.day);
       if (di === -1 || !sl.time) return;
-      lessonsByDay[di].push({ student: s, time: sl.time });
+      lessonsByDay[di].push({ student: s, time: sl.time, duration: sl.duration || 60 });
     });
   });
 
@@ -1892,9 +1953,9 @@ function renderScheduleView() {
       const isToday = di === todayIdx;
       rowsHtml += `<div class="sg-cell ${isHour ? 'hour-mark' : ''} ${isToday ? 'today-col' : ''}" data-day="${di}" data-row="${rowIdx}">`;
       // Place lessons that START at this slot
-      lessonsByDay[di].forEach(({ student: s, time }) => {
+      lessonsByDay[di].forEach(({ student: s, time, duration }) => {
         if (timeToRow(time) === rowIdx) {
-          const heightPx = (LESSON_DUR / STEP) * CELL_H - 2;
+          const heightPx = (duration / STEP) * CELL_H - 2;
           const prepKey = prepKey_(s.id, di, time);
           const isPrepped = getPrepState(prepKey);
           rowsHtml += `
@@ -1903,7 +1964,7 @@ function renderScheduleView() {
                 title="${isPrepped ? 'Материал готов' : 'Отметить как подготовлено'}"
                 onclick="togglePrep('${prepKey}',this)"></div>
               <div class="sg-lesson-name" onclick="selectStudent('${s.id}')">${esc(s.name)}</div>
-              <div class="sg-lesson-time">${esc(time)}</div>
+              <div class="sg-lesson-time">${esc(time)} · ${duration} мин</div>
             </div>`;
         }
       });
@@ -2185,6 +2246,7 @@ function renderMain() {
       <button class="tab-btn ${activeTab==='topics'?'active':''}" data-tab="topics" onclick="switchTab('topics')">📚 Темы</button>
       <button class="tab-btn ${activeTab==='attendance'?'active':''}" data-tab="attendance" onclick="switchTab('attendance')">📅 Посещаемость</button>
       <button class="tab-btn ${activeTab==='homework'?'active':''}" data-tab="homework" onclick="switchTab('homework')">✏️ Домашние задания</button>
+      <button class="tab-btn ${activeTab==='results'?'active':''}" data-tab="results" onclick="switchTab('results')">🏆 Результаты</button>
       <button class="tab-btn ${activeTab==='finance'?'active':''}" data-tab="finance" onclick="switchTab('finance')">💰 Оплата</button>
       <button class="tab-btn ${activeTab==='mistakes'?'active':''}" data-tab="mistakes" onclick="switchTab('mistakes')">🧩 Типовые ошибки</button>
       <button class="tab-btn ${activeTab==='links'?'active':''}" data-tab="links" onclick="switchTab('links')">🔗 Ссылки</button>
@@ -2198,6 +2260,9 @@ function renderMain() {
     </div>
     <div id="tab-homework" class="tab-panel ${activeTab==='homework'?'active':''}">
       ${renderHomeworkPanel(s)}
+    </div>
+    <div id="tab-results" class="tab-panel ${activeTab==='results'?'active':''}">
+      ${renderResultsPanel(s)}
     </div>
     <div id="tab-finance" class="tab-panel ${activeTab==='finance'?'active':''}">
       ${renderFinancePanel(s)}
@@ -2916,17 +2981,23 @@ function renderSlotRow(sl, i) {
     `<button type="button" class="day-btn ${sl.day === d ? 'selected' : ''}"
       onclick="selectSlotDay(this, ${i}, '${d}')">${d}</button>`
   ).join('');
+  const dur = sl.duration || 60;
+  const durOptions = [30,45,60,90,120].map(v =>
+    `<option value="${v}" ${dur === v ? 'selected' : ''}>${v} мин</option>`
+  ).join('');
   return `
     <div class="schedule-slot-row" id="slotRow-${i}" data-index="${i}">
       <div class="schedule-days">${dayBtns}</div>
       <input class="slot-time-input" type="time" value="${esc(sl.time || '')}"
         data-slot="${i}" placeholder="Время">
+      <select class="slot-duration-select" data-dur="${i}" title="Длительность занятия">
+        ${durOptions}
+      </select>
       <button class="slot-remove-btn" onclick="removeSlotRow(${i})" title="Удалить">×</button>
     </div>`;
 }
 
 function selectSlotDay(btn, rowIndex, day) {
-  // Deselect all day-btns in this row, select clicked one
   const row = document.getElementById('slotRow-' + rowIndex);
   if (!row) return;
   row.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
@@ -2938,14 +3009,13 @@ function addSlotRow() {
   if (!container) return;
   const i = container.querySelectorAll('.schedule-slot-row').length;
   const div = document.createElement('div');
-  div.innerHTML = renderSlotRow({ day: '', time: '' }, i);
+  div.innerHTML = renderSlotRow({ day: '', time: '', duration: 60 }, i);
   container.appendChild(div.firstElementChild);
 }
 
 function removeSlotRow(i) {
   const row = document.getElementById('slotRow-' + i);
   if (row) row.remove();
-  // Re-index remaining rows so IDs stay unique
   const container = document.getElementById('slotRows');
   if (!container) return;
   container.querySelectorAll('.schedule-slot-row').forEach((row, newIdx) => {
@@ -2956,6 +3026,8 @@ function removeSlotRow(i) {
     });
     const timeInp = row.querySelector('.slot-time-input');
     if (timeInp) timeInp.dataset.slot = newIdx;
+    const durSel = row.querySelector('.slot-duration-select');
+    if (durSel) durSel.dataset.dur = newIdx;
     const removeBtn = row.querySelector('.slot-remove-btn');
     if (removeBtn) removeBtn.setAttribute('onclick', `removeSlotRow(${newIdx})`);
   });
@@ -2968,9 +3040,11 @@ function collectSlots() {
   container.querySelectorAll('.schedule-slot-row').forEach(row => {
     const selectedDay = row.querySelector('.day-btn.selected');
     const timeInp = row.querySelector('.slot-time-input');
+    const durSel = row.querySelector('.slot-duration-select');
     const day = selectedDay ? selectedDay.textContent.trim() : '';
     const time = timeInp ? timeInp.value : '';
-    if (day) slots.push({ day, time });
+    const duration = durSel ? parseInt(durSel.value) : 60;
+    if (day) slots.push({ day, time, duration });
   });
   return slots;
 }
@@ -3065,6 +3139,177 @@ function removeMistake(id) {
   const s = getActive();
   s.mistakes = (s.mistakes || []).filter(x => x.id !== id);
   save(); renderMain();
+}
+
+// ─── RESULTS ──────────────────────────────────────────────────────────────────
+function scoreClass(score, maxScore) {
+  if (!score && score !== 0) return 'score-none';
+  const pct = maxScore ? score / maxScore : null;
+  if (pct === null) return 'score-none';
+  if (pct >= 0.8) return 'score-high';
+  if (pct >= 0.5) return 'score-mid';
+  return 'score-low';
+}
+
+function renderResultsPanel(s) {
+  const results = [...(s.results || [])].sort((a, b) => b.date.localeCompare(a.date));
+
+  const cards = results.map(r => {
+    const cls = scoreClass(r.score, r.maxScore);
+    const scoreLine = (r.score !== '' && r.score !== null && r.score !== undefined)
+      ? `${r.score}${r.maxScore ? ' / ' + r.maxScore : ''}`
+      : '—';
+    const thumbs = (r.images || []).map((src, i) => `
+      <div class="result-thumb-wrap">
+        <img class="result-thumb" src="${src}" alt="фото ${i+1}" onclick="openResultImage('${r.id}',${i})">
+        <button class="result-thumb-del" onclick="removeResultImage('${r.id}',${i})">×</button>
+      </div>`).join('');
+    return `
+      <div class="result-card">
+        <div class="result-card-header">
+          <div class="result-score-badge ${cls}">
+            ${scoreLine === '—' ? '<span style="font-size:18px">—</span>' :
+              `<div>${r.score}</div>${r.maxScore ? `<div class="score-max">из ${r.maxScore}</div>` : ''}`}
+          </div>
+          <div class="result-body">
+            <div class="result-title">${esc(r.title)}</div>
+            <div class="result-meta">${formatDate(r.date)}${r.type ? ' · ' + esc(r.type) : ''}</div>
+          </div>
+          <button class="btn-attach" onclick="triggerResultImageUpload('${r.id}')" title="Прикрепить фото">📎</button>
+          <button class="btn-remove-item" onclick="removeResult('${r.id}')">×</button>
+        </div>
+        ${r.comment ? `<div class="result-comment">${esc(r.comment)}</div>` : ''}
+        ${thumbs ? `<div class="result-images">${thumbs}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-head"><h2>Результаты тестов и пробников</h2></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${cards || '<div class="empty-state"><div class="icon">🏆</div><p>Результатов пока нет — добавьте первый тест</p></div>'}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head"><h2>Добавить результат</h2></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="newResultTitle" placeholder="Название теста / пробника"
+            style="flex:1;min-width:180px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+          <input type="text" id="newResultType" placeholder="Тип (пробник, ВПР, …)"
+            style="width:160px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="date" id="newResultDate" value="${todayStr()}"
+            style="border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;
+              font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)">
+          <input type="number" id="newResultScore" placeholder="Балл" min="0"
+            style="width:90px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 12px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+          <span style="color:var(--muted);font-size:14px">из</span>
+          <input type="number" id="newResultMax" placeholder="Макс." min="0"
+            style="width:90px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 12px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <input type="text" id="newResultComment" placeholder="Комментарий (что было сложно, динамика…)"
+          style="border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;
+            font-size:14px;font-family:Inter,sans-serif;outline:none;
+            background:var(--bg);color:var(--text)"
+          onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')addResult()">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn-add" onclick="addResult()">+ Добавить</button>
+          <button class="btn-attach" onclick="document.getElementById('newResultImgInput').click()">📎 Прикрепить фото</button>
+          <input type="file" id="newResultImgInput" accept="image/*" multiple style="display:none"
+            onchange="handleNewResultImages(this.files)">
+          <span id="newResultImgCount" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="resultAttachFile" accept="image/*" multiple style="display:none"
+      onchange="handleResultAttachFiles(this.files)">`;
+}
+
+let _pendingResultImages = [];
+let _attachingResultId = null;
+
+function addResult() {
+  const title = document.getElementById('newResultTitle')?.value.trim();
+  if (!title) { document.getElementById('newResultTitle')?.focus(); return; }
+  const type    = document.getElementById('newResultType')?.value.trim() || '';
+  const date    = document.getElementById('newResultDate')?.value || todayStr();
+  const scoreRaw = document.getElementById('newResultScore')?.value;
+  const maxRaw   = document.getElementById('newResultMax')?.value;
+  const comment  = document.getElementById('newResultComment')?.value.trim() || '';
+  const score    = scoreRaw !== '' && scoreRaw !== undefined ? Number(scoreRaw) : null;
+  const maxScore = maxRaw  !== '' && maxRaw  !== undefined ? Number(maxRaw)  : null;
+  const s = getActive();
+  if (!s.results) s.results = [];
+  s.results.push({ id: uid(), title, type, date, score, maxScore, comment, images: [..._pendingResultImages] });
+  _pendingResultImages = [];
+  save(); renderMain();
+  setTimeout(() => { const el = document.getElementById('newResultTitle'); if (el) el.focus(); }, 50);
+}
+
+function removeResult(id) {
+  const s = getActive();
+  s.results = (s.results || []).filter(x => x.id !== id);
+  save(); renderMain();
+}
+
+function triggerResultImageUpload(resultId) {
+  _attachingResultId = resultId;
+  const inp = document.getElementById('resultAttachFile');
+  if (inp) { inp.value = ''; inp.click(); }
+}
+
+function handleResultAttachFiles(files) {
+  if (!files || !files.length) return;
+  const s = getActive();
+  const r = (s.results || []).find(x => x.id === _attachingResultId);
+  if (!r) return;
+  if (!r.images) r.images = [];
+  readFilesAsBase64(Array.from(files), results => {
+    r.images.push(...results);
+    save(); renderMain();
+  });
+}
+
+function handleNewResultImages(files) {
+  if (!files || !files.length) return;
+  readFilesAsBase64(Array.from(files), results => {
+    _pendingResultImages.push(...results);
+    const cnt = document.getElementById('newResultImgCount');
+    if (cnt) cnt.textContent = _pendingResultImages.length + ' фото прикреплено';
+  });
+}
+
+function removeResultImage(resultId, idx) {
+  const s = getActive();
+  const r = (s.results || []).find(x => x.id === resultId);
+  if (!r || !r.images) return;
+  r.images.splice(idx, 1);
+  save(); renderMain();
+}
+
+function openResultImage(resultId, idx) {
+  const s = getActive();
+  const r = (s.results || []).find(x => x.id === resultId);
+  if (!r || !r.images || !r.images[idx]) return;
+  document.getElementById('lightboxImg').src = r.images[idx];
+  document.getElementById('lightbox').classList.remove('hidden');
 }
 
 // ─── LINKS ────────────────────────────────────────────────────────────────────
@@ -3248,7 +3493,7 @@ function saveStudent() {
     const s = {
       id: uid(), name, subject, color: selectedColor,
       topics: [], attendance: [], homework: [], boardUrl: '', links: [],
-      hourlyRate: 1500, payments: [], mistakes: [], schedule: { slots: [] }
+      hourlyRate: 1500, payments: [], mistakes: [], results: [], schedule: { slots: [] }
     };
     state.students.push(s);
     state.activeId = s.id;
