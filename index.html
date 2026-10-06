@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Репетитор — Журнал</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.85em' font-size='55' x='2'>📚</text><text y='1em' font-size='48' x='44'>✏️</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,6 +34,65 @@
     color: var(--text);
     min-height: 100vh;
   }
+
+  /* ── LOGIN SCREEN ── */
+  #loginScreen {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    padding: 24px;
+  }
+  #loginScreen.hidden { display: none; }
+  .login-card {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(122,74,92,.15);
+    padding: 44px 40px;
+    width: 100%; max-width: 380px;
+    text-align: center;
+  }
+  .login-logo {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800; font-size: 26px;
+    color: var(--blue); margin-bottom: 6px;
+  }
+  .login-logo span { color: var(--indigo); }
+  .login-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+  .login-label {
+    display: block; text-align: left;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .login-input {
+    width: 100%; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 11px 14px;
+    font-size: 15px; font-family: 'Inter', sans-serif;
+    outline: none; background: var(--bg); color: var(--text);
+    transition: border-color .15s; margin-bottom: 16px;
+  }
+  .login-input:focus { border-color: var(--indigo); }
+  .login-btn {
+    width: 100%; background: var(--indigo); color: #fff;
+    border: none; border-radius: 10px;
+    padding: 13px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: background .15s; margin-top: 4px;
+  }
+  .login-btn:hover { background: var(--blue); }
+  .login-error {
+    background: var(--red-lt); color: var(--red);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; font-weight: 600;
+    margin-bottom: 14px; display: none;
+  }
+  .login-error.show { display: block; }
+  .login-hint { font-size: 12px; color: var(--muted); margin-top: 20px; }
+
+  /* hide app until logged in */
+  #appRoot { display: none; }
+  #appRoot.visible { display: contents; }
 
   /* ── TOP BAR ── */
   header {
@@ -1042,36 +1102,53 @@
   /* FINANCE TAB */
   .fin-summary-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
     margin-bottom: 20px;
   }
-  .fin-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 14px;
-    border-radius: 8px;
+  @media (max-width: 860px) { .fin-summary-row { grid-template-columns: repeat(2, 1fr); } }
+
+  /* payment cells grid */
+  .fin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .fin-cell {
+    border-radius: 10px;
     border: 1.5px solid var(--border);
-    transition: border-color .15s, background .15s;
-  }
-  .fin-row:hover { border-color: var(--indigo); background: var(--indigo-lt); }
-  .fin-paid-badge, .fin-unpaid-badge {
-    flex-shrink: 0;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    border-radius: 6px;
-    padding: 3px 9px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
     cursor: pointer;
-    border: none;
-    font-family: 'Inter', sans-serif;
+    transition: border-color .15s, background .15s;
+    position: relative;
   }
+  .fin-cell:hover { border-color: var(--indigo); background: var(--indigo-lt); }
+  .fin-cell.paid   { background: var(--green-lt); border-color: #b3e8cf; }
+  .fin-cell.unpaid { background: var(--red-lt);   border-color: #f5c0c0; }
+  .fin-cell-date { font-size: 13px; font-weight: 600; }
+  .fin-cell-amount { font-size: 17px; font-weight: 800; font-family: 'Montserrat', sans-serif; }
+  .fin-cell.paid   .fin-cell-amount { color: var(--green); }
+  .fin-cell.unpaid .fin-cell-amount { color: var(--red); }
+  .fin-cell-status {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .fin-cell.paid   .fin-cell-status { color: var(--green); }
+  .fin-cell.unpaid .fin-cell-status { color: var(--red); }
+  .fin-cell-remove {
+    position: absolute; top: 6px; right: 6px;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 13px; padding: 0;
+    opacity: 0; transition: opacity .12s;
+    line-height: 1;
+  }
+  .fin-cell:hover .fin-cell-remove { opacity: 1; }
+
   .fin-paid-badge { background: var(--green-lt); color: var(--green); }
   .fin-unpaid-badge { background: var(--red-lt); color: var(--red); }
-  .fin-date { font-size: 13px; flex: 1; }
-  .fin-amount { font-weight: 700; font-size: 14px; }
   .fin-add-row {
     display: flex;
     gap: 8px;
@@ -1167,7 +1244,69 @@
   }
   .template-apply-btn:hover { background: #A8487A; }
 
-  /* PRINT REPORT (hidden helper iframe content uses inline styles) */
+  /* DURATION SELECT in schedule slot row */
+  .slot-duration-select {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    min-width: 90px;
+  }
+  .slot-duration-select:focus { border-color: var(--indigo); }
+
+  /* RESULTS TAB */
+  .result-card {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: border-color .15s, box-shadow .15s;
+    background: var(--surface);
+  }
+  .result-card:hover { border-color: var(--indigo); box-shadow: var(--shadow); }
+  .result-card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .result-score-badge {
+    flex-shrink: 0;
+    min-width: 52px;
+    text-align: center;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .result-score-badge .score-max { font-size: 11px; font-weight: 600; opacity: .7; }
+  .result-body { flex: 1; min-width: 0; }
+  .result-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+  .result-meta { font-size: 12px; color: var(--muted); }
+  .result-comment { font-size: 13px; color: var(--muted); margin-top: 8px; font-style: italic; }
+  .result-images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .result-thumb-wrap { position: relative; display: inline-block; }
+  .result-thumb {
+    width: 80px; height: 80px; object-fit: cover;
+    border-radius: 8px; border: 1.5px solid var(--border);
+    cursor: pointer; display: block; transition: opacity .15s;
+  }
+  .result-thumb:hover { opacity: .85; }
+  .result-thumb-del {
+    position: absolute; top: -6px; right: -6px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); color: #fff; border: none;
+    cursor: pointer; font-size: 11px; font-weight: 700;
+    display: none; align-items: center; justify-content: center; padding: 0;
+  }
+  .result-thumb-wrap:hover .result-thumb-del { display: flex; }
+
+  /* score color variants */
+  .score-high { background: var(--green-lt); color: var(--green); }
+  .score-mid  { background: var(--amber-lt); color: var(--amber); }
+  .score-low  { background: var(--red-lt);   color: var(--red); }
+  .score-none { background: var(--indigo-lt); color: var(--indigo); }
   .btn-export {
     background: none;
     border: 1.5px solid var(--border);
@@ -1415,9 +1554,57 @@
     .stats-row { grid-template-columns: 1fr 1fr; }
     .dash-stats-row { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ── REPORT MODAL ── */
+  .report-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:500; align-items:center; justify-content:center; }
+  .report-modal-overlay.open { display:flex; }
+  .report-modal { background:var(--surface); border-radius:var(--radius); padding:24px 28px; max-width:420px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,.18); }
+  .report-modal h3 { margin-bottom:16px; font-size:17px; }
+  .report-period-presets { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .preset-btn { padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface); cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); }
+  .preset-btn:hover, .preset-btn.active { background:var(--indigo); color:#fff; border-color:var(--indigo); }
+  .report-date-row { display:flex; gap:12px; align-items:flex-end; margin-bottom:16px; }
+  .report-date-row label { font-size:12px; color:var(--muted); font-weight:600; display:block; margin-bottom:4px; }
+  .report-date-row input { font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 10px; background:var(--surface); color:var(--text); width:140px; }
+
+  /* ── BREAKS ── */
+  .sg-break { position:absolute; inset:1px 2px; border-radius:6px; background:rgba(120,110,125,.22);
+    border:1.5px dashed rgba(120,110,125,.55); display:flex; align-items:flex-start; gap:4px; padding:3px 6px;
+    font-size:10px; font-weight:600; color:#6f6475; overflow:hidden; z-index:0; }
+  .sg-break-del { margin-left:auto; border:none; background:none; color:inherit; cursor:pointer; font-size:14px; line-height:1; opacity:.6; padding:0; }
+  .sg-break-del:hover { opacity:1; }
+  .breaks-panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; }
+  .breaks-panel h3 { font-size:14px; margin-bottom:10px; }
+  .break-item { display:flex; align-items:center; gap:12px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .brk-form { background:var(--indigo-lt); border-radius:10px; padding:14px; margin-top:12px; }
+  .brk-row { display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px; }
+  .brk-row label { font-size:12px; color:var(--muted); font-weight:600; display:block; margin-bottom:4px; }
+  .brk-row input, .brk-row select { font-size:13px; border:1px solid var(--border); border-radius:8px; padding:7px 10px; background:var(--surface); color:var(--text); }
+  .brk-day-chip { padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:var(--surface); cursor:pointer; font-size:12px; font-weight:600; color:var(--muted); }
+  .brk-day-chip.on { background:#8b8094; color:#fff; border-color:#8b8094; }
+  .btn-icon { background:none; border:none; cursor:pointer; font-size:14px; opacity:.7; }
+  .btn-icon:hover { opacity:1; }
 </style>
 </head>
 <body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">Репетитор<span>.</span></div>
+    <div class="login-subtitle">Личный журнал репетитора</div>
+    <div class="login-error" id="loginError">Неверный пароль. Попробуйте ещё раз.</div>
+    <label class="login-label" for="loginPassword">Пароль</label>
+    <input class="login-input" type="password" id="loginPassword"
+      placeholder="Введите пароль"
+      onkeydown="if(event.key==='Enter')submitLogin()">
+    <button class="login-btn" onclick="submitLogin()">Войти</button>
+    <div class="login-hint" id="loginHint"></div>
+  </div>
+</div>
+
+<!-- ── APP (hidden until logged in) ── -->
+<div id="appRoot">
 
 <header>
   <div class="logo-row">
@@ -1425,7 +1612,11 @@
     <button class="header-home-btn" id="navHome" onclick="showDashboard()">🏠 Главная</button>
     <button class="header-home-btn" id="navSchedule" onclick="showScheduleView()">📅 Расписание</button>
   </div>
-  <div class="header-date" id="headerDate"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="header-date" id="headerDate"></div>
+    <button class="header-home-btn" onclick="showChangePassword()" title="Сменить пароль" style="font-size:16px;padding:4px 10px">🔑</button>
+    <button class="header-home-btn" onclick="logout()" title="Выйти" style="font-size:16px;padding:4px 10px">🚪</button>
+  </div>
 </header>
 
 <div class="app">
@@ -1469,6 +1660,118 @@
 </div>
 
 <script>
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+const AUTH_KEY   = 'tutorAuth_hash';
+const SESSION_KEY = 'tutorAuth_session';
+const DEFAULT_PASSWORD = 'репетитор'; // shown as hint on first launch
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function getStoredHash() { return localStorage.getItem(AUTH_KEY); }
+function setStoredHash(h) { localStorage.setItem(AUTH_KEY, h); }
+function setSession()     { sessionStorage.setItem(SESSION_KEY, '1'); }
+function hasSession()     { return sessionStorage.getItem(SESSION_KEY) === '1'; }
+function clearSession()   { sessionStorage.removeItem(SESSION_KEY); }
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appRoot').style.display = 'contents';
+}
+function showLoginScreen() {
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('appRoot').style.display = 'none';
+  setTimeout(() => document.getElementById('loginPassword').focus(), 100);
+}
+
+async function submitLogin() {
+  const pwd = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  if (!pwd) { errEl.classList.add('show'); errEl.textContent = 'Введите пароль.'; return; }
+  const hash = await sha256(pwd);
+  const stored = getStoredHash();
+  if (!stored) {
+    // First launch — any password sets it
+    setStoredHash(hash);
+    setSession();
+    document.getElementById('loginPassword').value = '';
+    errEl.classList.remove('show');
+    showApp();
+    initApp();
+    return;
+  }
+  if (hash === stored) {
+    setSession();
+    document.getElementById('loginPassword').value = '';
+    errEl.classList.remove('show');
+    showApp();
+    initApp();
+  } else {
+    errEl.textContent = 'Неверный пароль. Попробуйте ещё раз.';
+    errEl.classList.add('show');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  }
+}
+
+function logout() {
+  clearSession();
+  showLoginScreen();
+}
+
+function showChangePassword() {
+  ['cpwdCurrent','cpwdNew','cpwdRepeat'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cpwdError').textContent = '';
+  document.getElementById('changePwdModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('cpwdCurrent').focus(), 60);
+}
+
+async function submitChangePassword() {
+  const current = document.getElementById('cpwdCurrent').value;
+  const newPwd  = document.getElementById('cpwdNew').value;
+  const repeat  = document.getElementById('cpwdRepeat').value;
+  const errEl   = document.getElementById('cpwdError');
+
+  if (!current || !newPwd || !repeat) { errEl.textContent = 'Заполните все поля.'; return; }
+  if (newPwd.length < 4) { errEl.textContent = 'Новый пароль должен быть не менее 4 символов.'; return; }
+  if (newPwd !== repeat) { errEl.textContent = 'Пароли не совпадают.'; return; }
+
+  const currentHash = await sha256(current);
+  if (currentHash !== getStoredHash()) { errEl.textContent = 'Текущий пароль неверен.'; return; }
+
+  const newHash = await sha256(newPwd);
+  setStoredHash(newHash);
+  document.getElementById('changePwdModal').classList.add('hidden');
+  // Show brief success toast
+  const toast = document.createElement('div');
+  toast.textContent = '✓ Пароль успешно изменён';
+  toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:var(--green);color:#fff;padding:12px 24px;border-radius:10px;
+    font-weight:600;font-size:14px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.15)`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// Boot: check session before showing anything
+(function boot() {
+  // Pre-seed password hash if not yet set (first launch on new device)
+  const PRESET_HASH = '58a6d6801ae771e632351013ffe8e53628287bf5310e469c8c48573669011ef0';
+  if (!getStoredHash()) setStoredHash(PRESET_HASH);
+
+  if (hasSession()) {
+    // Already logged in this browser session
+    showApp();
+    // initApp() will be called below after STATE section loads
+    // We defer it so all functions are defined first
+    window._autoInit = true;
+  } else {
+    // Password is pre-set — no hint needed
+    document.getElementById('loginHint').textContent = '';
+  }
+})();
+
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const COLORS = ['#F2C2D6','#C2D8F2','#C7E8D6','#F2DBBE','#DCC9EE','#F2C2BE','#C2E2E5','#F0E0A8','#D2DCC0','#EEC2E2'];
 const STORAGE_KEY = 'tutorJournal_v2';
@@ -1482,2138 +1785,186 @@ let state = {
 };
 
 let activeTab = 'topics';
+let _reportStudentId = null;
+let _reportMode = 'general';
 
-// ─── JSONBIN CONFIG ──────────────────────────────────────────────────────────
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      state = JSON.parse(raw);
+      if (!('templates' in state)) state.templates = [];
+      if (!('breaks' in state)) state.breaks = [];
+      migrateBreakStudents(state);
+      if (!('view' in state)) state.view = state.activeId ? 'student' : 'dashboard';
+      // Migrate old topic format: {date: "дд.мм"} → {planDate:'', doneDate:''}
+      state.students.forEach(s => {
+        if (!('boardUrl' in s)) s.boardUrl = '';
+        if (!('links' in s)) s.links = [];
+        if (!('hourlyRate' in s)) s.hourlyRate = 1500;
+        if (!('payments' in s)) s.payments = [];
+        if (!('mistakes' in s)) s.mistakes = [];
+        if (!('schedule' in s)) s.schedule = { slots: [] };
+        else if (!Array.isArray(s.schedule.slots)) {
+          s.schedule = { slots: normalizeSchedule(s.schedule) };
+        }
+        if (!('results' in s)) s.results = [];
+        (s.topics || []).forEach(t => {
+          if (!('planDate' in t)) t.planDate = '';
+          if (!('doneDate' in t)) {
+            // old t.date was "дд.мм" (display only), can't reliably convert — drop it
+            t.doneDate = t.done ? todayStr() : '';
+            delete t.date;
+          }
+        });
+        (s.attendance || []).forEach(a => {
+          if (!('note' in a)) a.note = '';
+        });
+      });
+    }
+  } catch(e) {}
+}
+// ─── JSONBIN CONFIG ────────────────────────────────────────────────────────────
 const JSONBIN_API_KEY = '$2a$10$/amUwp6L.qLL5RPlu/ZDYO9VFAv1zCUWIxUrvGkWmjYuY4km8F2LC';
 const JSONBIN_BIN_ID  = '6ac25e15ffd5d160534c2a1c';
 const JSONBIN_URL     = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
 
-function migrateState(s) {
-  if (!('templates' in s)) s.templates = [];
-  if (!('breaks' in s)) s.breaks = [];
-  if (!('view' in s)) s.view = s.activeId ? 'student' : 'dashboard';
-  s.students.forEach(st => {
-    if (!('boardUrl' in st)) st.boardUrl = '';
-    if (!('links' in st)) st.links = [];
-    if (!('hourlyRate' in st)) st.hourlyRate = 1500;
-    if (!('payments' in st)) st.payments = [];
-    if (!('mistakes' in st)) st.mistakes = [];
-    if (!('results' in st)) st.results = [];
-    if (!('schedule' in st)) st.schedule = { slots: [] };
-    else if (!Array.isArray(st.schedule.slots)) {
-      st.schedule = { slots: normalizeSchedule(st.schedule) };
-    }
-    (st.topics || []).forEach(t => {
-      if (!('planDate' in t)) t.planDate = '';
-      if (!('doneDate' in t)) {
-        t.doneDate = t.done ? todayStr() : '';
-        delete t.date;
-      }
-    });
-    (st.attendance || []).forEach(a => {
-      if (!('note' in a)) a.note = '';
-    });
+// Старая схема: «перерыв» был псевдо-учеником. Превращаем его слоты в настоящие перерывы.
+function migrateBreakStudents(st) {
+  if (!st || !Array.isArray(st.students)) return;
+  if (!Array.isArray(st.breaks)) st.breaks = [];
+  const keep = [];
+  st.students.forEach(s => {
+    if (String(s.name || '').trim().toLowerCase() === 'перерыв') {
+      const slots = (s.schedule && Array.isArray(s.schedule.slots)) ? s.schedule.slots : normalizeSchedule(s.schedule || {});
+      slots.forEach(sl => {
+        if (sl.day && sl.time) st.breaks.push({ id: 'brk_' + uid(), day: sl.day, time: sl.time, duration: sl.duration || 60, label: 'Перерыв' });
+      });
+      if (st.activeId === s.id) { st.activeId = null; st.view = 'dashboard'; }
+    } else keep.push(s);
   });
-  return s;
+  st.students = keep;
 }
 
-function load() {
-  // Сначала пробуем localStorage (кэш для быстрого старта)
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      state = migrateState(JSON.parse(raw));
-    }
-  } catch(e) {}
-  // Потом асинхронно загружаем из облака
-  loadFromCloud();
+function migrateState(loaded) {
+  if (!('templates' in loaded)) loaded.templates = [];
+  if (!('breaks' in loaded)) loaded.breaks = [];
+  if (!('view' in loaded)) loaded.view = loaded.activeId ? 'student' : 'dashboard';
+  migrateBreakStudents(loaded);
+  (loaded.students || []).forEach(s => {
+    if (!('boardUrl' in s)) s.boardUrl = '';
+    if (!('links' in s)) s.links = [];
+    if (!('hourlyRate' in s)) s.hourlyRate = 1500;
+    if (!('payments' in s)) s.payments = [];
+    if (!('mistakes' in s)) s.mistakes = [];
+    if (!('results' in s)) s.results = [];
+    if (!('schedule' in s)) s.schedule = { slots: [] };
+    else if (!Array.isArray(s.schedule.slots)) s.schedule = { slots: normalizeSchedule(s.schedule) };
+    (s.topics || []).forEach(t => {
+      if (!('planDate' in t)) t.planDate = '';
+      if (!('doneDate' in t)) { t.doneDate = t.done ? todayStr() : ''; delete t.date; }
+    });
+    (s.attendance || []).forEach(a => { if (!('note' in a)) a.note = ''; });
+  });
+  return loaded;
+}
+
+let cloudLoaded = false;   // не пишем в облако, пока не прочитали его (чтобы не затереть данные)
+let _saveTimer = null;
+
+function setCloudStatus(kind, msg) {
+  let el = document.getElementById('cloudStatus');
+  if (!el) {
+    const host = document.getElementById('headerDate');
+    if (!host || !host.parentNode) return;
+    el = document.createElement('span');
+    el.id = 'cloudStatus';
+    el.style.cssText = 'margin-left:4px;font-size:12px;color:#fff;background:rgba(255,255,255,.18);padding:3px 10px;border-radius:12px';
+    host.parentNode.insertBefore(el, host.nextSibling);
+  }
+  el.textContent = kind === 'ok' ? '☁️ синхронизировано' : (kind === 'busy' ? '☁️ …' : '⚠️ нет связи с облаком');
+  el.title = msg || '';
 }
 
 function loadFromCloud() {
+  setCloudStatus('busy');
   fetch(JSONBIN_URL + '/latest', {
-    headers: {
-      'X-Master-Key': JSONBIN_API_KEY,
-      'X-Bin-Meta': 'false'
-    }
+    headers: { 'X-Master-Key': JSONBIN_API_KEY, 'X-Bin-Meta': 'false' }
   })
-  .then(r => r.json())
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
   .then(data => {
-    // JSONBin возвращает {record: {...}} или сразу объект
-    const record = data.record !== undefined ? data.record : data;
-    if (record && record.students && record.students.length > 0) {
+    const record = (data && data.record !== undefined) ? data.record : data;
+    cloudLoaded = true;
+    if (record && Array.isArray(record.students) && record.students.length > 0) {
       state = migrateState(record);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
       renderSidebar();
-      if (state.view === 'student' && state.activeId) {
-        renderMain();
-      } else if (state.view === 'schedule') {
-        setNavActive('navSchedule');
-        renderScheduleView();
-      } else {
-        setNavActive('navHome');
-        showDashboard();
-      }
+      if (state.view === 'student' && state.activeId) renderMain();
+      else if (state.view === 'schedule') { setNavActive('navSchedule'); renderScheduleView(); }
+      else { setNavActive('navHome'); showDashboard(); }
+      setCloudStatus('ok');
+    } else {
+      saveToCloud();   // облако пустое — загружаем туда то, что есть на этом устройстве
     }
   })
-  .catch(e => console.warn('JSONBin load error:', e));
+  .catch(e => { console.warn('JSONBin load error:', e); setCloudStatus('err', String(e)); });
 }
 
-let _saveTimer = null;
 function save() {
-  // Немедленно в localStorage
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  // В облако — с дебаунсом 1.5 сек чтобы не спамить API
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
   clearTimeout(_saveTimer);
   _saveTimer = setTimeout(saveToCloud, 1500);
 }
 
 function saveToCloud() {
+  if (!cloudLoaded) { setCloudStatus('err', 'Облако ещё не прочитано: изменения пока только на этом устройстве'); return; }
+  setCloudStatus('busy');
   fetch(JSONBIN_URL, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': JSONBIN_API_KEY,
-      'X-Bin-Versioning': 'false'
-    },
+    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY, 'X-Bin-Versioning': 'false' },
     body: JSON.stringify(state)
   })
-  .then(r => r.json())
-  .then(data => {
-    if (data.metadata) console.log('JSONBin saved, version:', data.metadata.version);
-  })
-  .catch(e => console.warn('JSONBin save error:', e));
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(() => setCloudStatus('ok'))
+  .catch(e => { console.warn('JSONBin save error:', e); setCloudStatus('err', String(e)); });
 }
+
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-load();
+function initApp() {
+  load();
 
-document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ru-RU', {
-  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-});
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('ru-RU', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
 
-// Seed demo data if empty
-if (state.students.length === 0) {
-  const seedData = {
-  "students": [
-    {
-      "id": "mt9rx814bjvl",
-      "name": "Таютка",
-      "subject": "Математика 9 класс",
-      "color": "#EEC2E2",
-      "topics": [
-        {
-          "id": "mt9ry1ngzhze",
-          "text": "Задания 1-5 (связь)",
-          "done": true,
-          "planDate": "2026-07-02",
-          "doneDate": "2026-07-02"
-        },
-        {
-          "id": "mtblg35fkk77",
-          "text": "Задания 1-5 (участки)",
-          "done": true,
-          "planDate": "2026-08-27",
-          "doneDate": "2026-08-27"
-        },
-        {
-          "id": "mtbmuth5f57z",
-          "text": "Задания 1-5 (участки)",
-          "done": true,
-          "planDate": "2026-09-03",
-          "doneDate": "2026-09-03"
-        },
-        {
-          "id": "mtl99dhzm96h",
-          "text": "Задания 1-5 (листы)",
-          "done": false,
-          "planDate": "2026-09-06",
-          "doneDate": ""
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mt9tea3rv5n7",
-          "date": "2026-07-20",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mtbmt4kd02fh",
-          "date": "2026-08-27",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mtl8uyoikdbx",
-          "date": "2026-09-03",
-          "present": true,
-          "note": "завершили участки"
-        },
-        {
-          "id": "mtl99rzncha8",
-          "date": "2026-09-06",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mtblgpx7fd3h",
-          "text": "Задачи 1 на листе 3 (участки)",
-          "due": "2026-08-27",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mtbmt12h6bry",
-          "text": "решить задания 2-5 на листе 3 по одной из задач",
-          "due": "2026-09-03",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "mtl93qnntvoa",
-          "text": "Решить задачи 1-5 вариант 9 из сборника Ященко",
-          "due": "2026-09-10",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "",
-      "links": [
-        {
-          "id": "mtl689t52o59",
-          "title": "Телемост",
-          "url": "https://telemost.yandex.ru/j/04567774560275"
-        }
-      ],
-      "hourlyRate": 0,
-      "payments": [],
-      "mistakes": [],
-      "schedule": {
-        "slots": []
-      },
-      "results": []
-    },
-    {
-      "id": "mt9ryxs81ac4",
-      "name": "Лера 9",
-      "subject": "Математика 9 класс",
-      "color": "#D2DCC0",
-      "topics": [
-        {
-          "id": "mt9rzpp7tsg9",
-          "text": "Первое пробное занятие",
-          "done": true,
-          "planDate": "2026-08-13",
-          "doneDate": "2026-08-13"
-        },
-        {
-          "id": "mt9s0fjri4zq",
-          "text": "Пробник ОГЭ 1 часть",
-          "done": true,
-          "planDate": "2026-08-20",
-          "doneDate": "2026-08-20"
-        },
-        {
-          "id": "mtmrxkscs2y6",
-          "text": "1-5 (участки) начали + разбирали дз",
-          "done": true,
-          "planDate": "2026-09-04",
-          "doneDate": "2026-09-04"
-        },
-        {
-          "id": "mtskd2kyvqaj",
-          "text": "Векторы + действительные числа (разбор школьного дз)",
-          "done": true,
-          "planDate": "2026-09-08",
-          "doneDate": "2026-09-08"
-        },
-        {
-          "id": "mtwtpqnuri3d",
-          "text": "Степени(алгебра), 1-5 (участки) закончили",
-          "done": true,
-          "planDate": "2026-09-11",
-          "doneDate": "2026-09-11"
-        },
-        {
-          "id": "mu2jicgeeu2t",
-          "text": "1-5 (участки) + 1-5 (листы) + работа с векторами",
-          "done": true,
-          "planDate": "2026-09-15",
-          "doneDate": "2026-09-15"
-        },
-        {
-          "id": "mu6thd1jj89d",
-          "text": "1-5 (листы) закончили, начали 1-5 (шины)",
-          "done": true,
-          "planDate": "2026-09-18",
-          "doneDate": "2026-09-18"
-        },
-        {
-          "id": "mu9hofqo51vw",
-          "text": "1-5 (шины)",
-          "done": true,
-          "planDate": "2026-09-22",
-          "doneDate": "2026-09-22"
-        },
-        {
-          "id": "mugtzlm1yh3y",
-          "text": "Завершили 1-5 (шины), начали 1-5 (печи)",
-          "done": true,
-          "planDate": "2026-09-25",
-          "doneDate": "2026-09-25"
-        },
-        {
-          "id": "mumilggqglo3",
-          "text": "Разбор пробника, + задачи 1-5 (шины)",
-          "done": true,
-          "planDate": "2026-09-29",
-          "doneDate": "2026-09-29"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mt9s0tv3clq0",
-          "date": "2026-08-13",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mt9s0w7rj2mz",
-          "date": "2026-08-20",
-          "present": true,
-          "note": "пробник: сложно геометрия, графики, эйлера"
-        },
-        {
-          "id": "mtmtle7tpb5z",
-          "date": "2026-09-04",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mtske7y9qxwv",
-          "date": "2026-09-08",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mtwtox5yze9o",
-          "date": "2026-09-11",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu2jkrcb7gsp",
-          "date": "2026-09-15",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu6thiib56rs",
-          "date": "2026-09-18",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jfrfbmiok",
-          "date": "2026-09-22",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jfulv0gqu",
-          "date": "2026-09-25",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jfyef9r5p",
-          "date": "2026-09-29",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujz9vjerofx",
-          "date": "2026-10-02",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mt9s1xlbvu3n",
-          "text": "1-5 1 лист",
-          "due": "2026-08-20",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mt9s29342rhc",
-          "text": "1-5 пробник 2 лист",
-          "due": "2026-08-26",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mtmthw6yimg3",
-          "text": "1-5 на листе 3",
-          "due": "2026-09-08",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mtskdx29h18d",
-          "text": "1-5 на листе 3",
-          "due": "2026-09-11",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mtwtouia05v5",
-          "text": "1-5 на листе 3 (вариант 9)",
-          "due": "2026-09-15",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu2jm19myct5",
-          "text": "1-4 на листе 5 (отмечено ДЗ)",
-          "due": "2026-09-17",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu6tif8b6tvo",
-          "text": "Решить задачу 4 типа на листе 6 (отмечено ДЗ)",
-          "due": "2026-09-22",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "muciqnsawd8v",
-          "text": "Задачи 1-5 вариант 23 на листе 6",
-          "due": "2026-09-25",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "mugu08dladnj",
-          "text": "Пробник",
-          "due": "2026-09-28",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mumieh1fwbg2",
-          "text": "Задачи 1-5 вариант 25 (шины) на листе 7",
-          "due": "2026-10-02",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://boards.yandex.ru/whiteboard/?hash=f7722c924772faf4f69a8a07a5cec54c",
-      "links": [
-        {
-          "id": "mt9s3qx31549",
-          "title": "Телемост",
-          "url": "https://telemost.yandex.ru/j/91148898812493"
-        },
-        {
-          "id": "mt9s40z7990z",
-          "title": "1 пробник результаты добавить",
-          "url": "https://oge.sdamgia.ru/test?a=show_result&stat_id=140760230&retriable=1"
-        }
-      ],
-      "hourlyRate": 900,
-      "payments": [
-        {
-          "id": "mtjmazm4tagt",
-          "date": "2026-08-20",
-          "amount": 1500,
-          "paid": true
-        },
-        {
-          "id": "mu6tj9ibf68o",
-          "date": "2026-09-15",
-          "amount": 900,
-          "paid": true
-        },
-        {
-          "id": "mucir0y2hlgr",
-          "date": "2026-09-22",
-          "amount": 900,
-          "paid": true
-        }
-      ],
-      "mistakes": [
-        {
-          "id": "mtjmibdok93e",
-          "text": "Геометрия сложно корни, графики",
-          "date": "2026-09-02"
-        },
-        {
-          "id": "mtjmilhn6t4q",
-          "text": "прошла участки, путь",
-          "date": "2026-09-02"
-        }
-      ],
-      "schedule": {
-        "slots": [
-          {
-            "day": "вт",
-            "time": "15:30",
-            "duration": 90
-          },
-          {
-            "day": "пт",
-            "time": "16:00",
-            "duration": 90
-          }
-        ]
-      },
-      "results": [
-        {
-          "id": "mumledgmsljz",
-          "title": "Пробный сентябрь",
-          "type": "",
-          "date": "2026-09-29",
-          "score": 6,
-          "maxScore": 19,
-          "comment": "https://oge.sdamgia.ru/test?a=show_result&stat_id=142058335&retriable=1",
-          "images": []
-        }
-      ]
-    },
-    {
-      "id": "mt9s4hrjsfn5",
-      "name": "Дарья Зинина 7",
-      "subject": "Математика 7 класс",
-      "color": "#D2DCC0",
-      "topics": [
-        {
-          "id": "mt9s50k3mnso",
-          "text": "Пробное занятие",
-          "done": true,
-          "planDate": "2026-08-21",
-          "doneDate": "2026-08-21"
-        },
-        {
-          "id": "mtjmda1ujlym",
-          "text": "Повторение 6 класса: таблица умножения, порядок действий, обыкновенные и десятичные дроби, выражения",
-          "done": true,
-          "planDate": "2026-09-02",
-          "doneDate": "2026-09-02"
-        },
-        {
-          "id": "mto3u4t4lqkj",
-          "text": "Разбор основных тем 6 класса, введение в 7 класс в формате \"Своя игра\"",
-          "done": true,
-          "planDate": "2026-09-07",
-          "doneDate": "2026-09-07"
-        },
-        {
-          "id": "mttkomxcr4h8",
-          "text": "Разбор темы \"Рациональные числа\", \"Выражения\", вспомнили проценты, решали примеры повышенного уровня сложности",
-          "done": true,
-          "planDate": "2026-09-09",
-          "doneDate": "2026-09-09"
-        },
-        {
-          "id": "mu0q2e8ucghx",
-          "text": "Выражения с переменными, задачи на проценты и части",
-          "done": true,
-          "planDate": "2026-09-14",
-          "doneDate": "2026-09-14"
-        },
-        {
-          "id": "mu6fsfvdrmcz",
-          "text": "Выражения и их преобразования",
-          "done": true,
-          "planDate": "2026-09-18",
-          "doneDate": "2026-09-18"
-        },
-        {
-          "id": "muaq4yca49vd",
-          "text": "Линейное уравнение с одной переменной",
-          "done": true,
-          "planDate": "2026-09-21",
-          "doneDate": "2026-09-21"
-        },
-        {
-          "id": "muaq596ere3a",
-          "text": "Линейные уравнения со скобками и дробями",
-          "done": true,
-          "planDate": "2026-09-23",
-          "doneDate": "2026-09-23"
-        },
-        {
-          "id": "muaq5n2ifxga",
-          "text": "Проверочная работа",
-          "done": true,
-          "planDate": "2026-09-28",
-          "doneDate": "2026-09-28"
-        },
-        {
-          "id": "munnk50dn467",
-          "text": "Разбор сложных заданий проверочной работы + преобразования выражений",
-          "done": true,
-          "planDate": "2026-09-30",
-          "doneDate": "2026-09-30"
-        },
-        {
-          "id": "munnmbyanw2v",
-          "text": "Линейные уравнения (продолжение)",
-          "done": false,
-          "planDate": "2026-10-05",
-          "doneDate": ""
-        },
-        {
-          "id": "mupad8ygg3s5",
-          "text": "Геометрия: основы + вертикальные и смежные углы",
-          "done": false,
-          "planDate": "2026-10-05",
-          "doneDate": ""
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mt9s5crb0tyk",
-          "date": "2026-08-21",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mtjmeglytq6e",
-          "date": "2026-09-02",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mtjmesby6i0f",
-          "date": "2026-09-07",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mtjmevg2r99a",
-          "date": "2026-09-09",
-          "present": true,
-          "planned": true,
-          "note": "Добавили примеры повышенного уровня сложности, Даша отлично справляется, подсказки требуются минимальные, в основном решает сама. В итогах урока отметила, что такие примеры даются ей сложновато, будем постепенно добавлять их в занятия"
-        },
-        {
-          "id": "mtjmexvqo98r",
-          "date": "2026-09-14",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mtjmf2926l26",
-          "date": "2026-09-21",
-          "present": true,
-          "planned": true,
-          "note": "сложные уравнения с несколькими действиями даются трудновато, теряем знаки при умножении"
-        },
-        {
-          "id": "mtjmf416e1xw",
-          "date": "2026-09-23",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mtjmf5wut2rg",
-          "date": "2026-09-28",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mtjmf7n24w2f",
-          "date": "2026-09-30",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mu0q2tlqqvsq",
-          "date": "2026-09-18",
-          "present": true,
-          "planned": true,
-          "note": "У Даши уже отлично получается раскрывать скобки, решали примеры трех уровней сложности, Даша во всех показала хороший результат, иногда теряет минусы при вычислениях, иногда путается с отрицательными числами"
-        }
-      ],
-      "homework": [
-        {
-          "id": "mtjme75yvqos",
-          "text": "Лист 2, дз отмечено галочками (выражения, дроби)",
-          "due": "2026-09-07",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mtqps7vsz7vn",
-          "text": "Лист 2, задачи 1,4,8,10 + задача",
-          "due": "2026-09-09",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mttmflb4uqvb",
-          "text": "Лист 3, дз в зеленой рамке (№2(3,4), №3(3), №1(в))",
-          "due": "2026-09-14",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu0y9lfk4fem",
-          "text": "Лист 4: нахождение значение выражения с двумя переменными, задача на проценты, пример",
-          "due": "2026-09-18",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu6fychx3tpn",
-          "text": "Лист 5, задания 1,3,5 на слайде с дз",
-          "due": "2026-09-21",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "muaq962gysls",
-          "text": "Лист 5, задания 2,3,5,6,7 на слайде с дз",
-          "due": "2026-09-23",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mukn3x92i191",
-          "text": "Лист 5, задания 1,2,3,5 на слайде с дз",
-          "due": "2026-09-28",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "munnlimj82zl",
-          "text": "Лист 5, задание 3 (а,б,в)",
-          "due": "2026-10-05",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://boards.yandex.ru/whiteboard/?hash=b9184c82942d850c53dcca34c2078de9",
-      "links": [
-        {
-          "id": "mt9s76ca4lw2",
-          "title": "Телемост",
-          "url": "https://telemost.yandex.ru/j/12111138271995"
-        },
-        {
-          "id": "mtjrxsnk27jp",
-          "title": "Алгебра 2024",
-          "url": "https://so.11klasov.net/9590-algebra-7-klass-uchebnik-makarychev-jun-mindjuk-ng-i-dr.html"
-        },
-        {
-          "id": "mtjrzwf4mzhd",
-          "title": "Геометрия 2024",
-          "url": "https://so.11klasov.net/20711-matematika-geometrija-7-9-klassy-bazovyj-uroven-uchebnik-atanasjan-ls-butuzov-vf-kadomcev-sb-i-dr.html"
-        }
-      ],
-      "hourlyRate": 800,
-      "payments": [
-        {
-          "id": "mtihrcwdt2nv",
-          "date": "2026-09-02",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihrgctavwo",
-          "date": "2026-09-07",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihrla502lw",
-          "date": "2026-09-09",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihrsx9mubj",
-          "date": "2026-09-14",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihrvcx4e4x",
-          "date": "2026-09-16",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihryy9bn00",
-          "date": "2026-09-21",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihs2jd9q9j",
-          "date": "2026-09-23",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihs539xtvg",
-          "date": "2026-09-28",
-          "amount": 800,
-          "paid": true
-        },
-        {
-          "id": "mtihs7h5m5qk",
-          "date": "2026-09-30",
-          "amount": 800,
-          "paid": true
-        }
-      ],
-      "mistakes": [
-        {
-          "id": "mt9s5t2zr2av",
-          "text": "Будем работать над выражениями, операциями, таблицей умножения, минусами, знаками, процентами",
-          "date": "2026-08-26"
-        },
-        {
-          "id": "mu6fzhdlv8ej",
-          "text": "Иногда теряет минусы, сложновато дается работа с отрицательными числами в больших примерах",
-          "date": "2026-09-18"
-        },
-        {
-          "id": "muaqjs2e8crp",
-          "text": "Повторим приведение подобных слагаемых",
-          "date": "2026-09-21"
-        }
-      ],
-      "schedule": {
-        "slots": [
-          {
-            "day": "пн",
-            "time": "10:00",
-            "duration": 60
-          },
-          {
-            "day": "ср",
-            "time": "10:00",
-            "duration": 60
-          }
-        ]
-      },
-      "results": [
-        {
-          "id": "mukwntfio8e1",
-          "title": "Проверочная работа по темам месяца",
-          "type": "",
-          "date": "2026-09-28",
-          "score": 31,
-          "maxScore": 33,
-          "comment": "результат очень хороший, есть отдельные пробелы для точечной проработки, путает минусы и плюсы, есть ошибки в счёте",
-          "images": []
-        }
-      ]
-    },
-    {
-      "id": "mt9sz2d4jkj6",
-      "name": "Паша 9 49215",
-      "subject": "Математика 9 класс",
-      "color": "#C2D8F2",
-      "topics": [
-        {
-          "id": "mt9t3ew88cky",
-          "text": "1-5 (участки) закончили разбирать, разбирали дз",
-          "done": true,
-          "planDate": "2026-08-26",
-          "doneDate": "2026-08-26"
-        },
-        {
-          "id": "mt9t40bs0w6w",
-          "text": "1-5 (листы) закончить, вариант 1",
-          "done": true,
-          "planDate": "2026-08-31",
-          "doneDate": "2026-08-31"
-        },
-        {
-          "id": "mth41sedlswh",
-          "text": "завершить 1-5 (листы), начать 1-5 (шины)",
-          "done": true,
-          "planDate": "2026-09-07",
-          "doneDate": "2026-09-07"
-        },
-        {
-          "id": "mty1kiipaahq",
-          "text": "1-5 (шины)",
-          "done": true,
-          "planDate": "2026-09-14",
-          "doneDate": "2026-09-14"
-        },
-        {
-          "id": "mu1ar6zl0grc",
-          "text": "1-5 (шины)",
-          "done": true,
-          "planDate": "2026-09-21",
-          "doneDate": "2026-09-21"
-        },
-        {
-          "id": "muc4uwo3m8hu",
-          "text": "1-5 шины",
-          "done": true,
-          "planDate": "2026-09-28",
-          "doneDate": "2026-09-28"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mt9t6yscrx0i",
-          "date": "2026-08-26",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mth43rl1saot",
-          "date": "2026-08-31",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mty1jmungi17",
-          "date": "2026-09-07",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu1aqv1xlvxd",
-          "date": "2026-09-14",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jgab3eo6o",
-          "date": "2026-09-21",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jgcgzmd9s",
-          "date": "2026-09-28",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqt9gwzt8b",
-          "date": "2026-10-05",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mt9t6u0kn41r",
-          "text": "1-5 листы вариант 2",
-          "due": "2026-08-31",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mth42md56q2v",
-          "text": "решить задачи 1-5 (листы) вариант 21 на листе 16",
-          "due": "2026-09-07",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mty1k5ojh0sc",
-          "text": "1-3 шины",
-          "due": "2026-09-14",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu1arl7hytfe",
-          "text": "5 шины",
-          "due": "2026-09-21",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "muc4vehb0fv8",
-          "text": "1-5 шины",
-          "due": "2026-09-28",
-          "status": "done",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://boards.yandex.ru/whiteboard/?hash=3bab91c1b1983c516fcf794d62821200",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [
-        {
-          "id": "mth43cwhao9h",
-          "text": "разобрать еще задачи 5 типа с листами про высоту шрифта в пунктах",
-          "date": "2026-08-31"
-        }
-      ],
-      "schedule": {
-        "slots": [
-          {
-            "day": "пн",
-            "time": "16:00"
-          }
-        ]
-      },
-      "results": []
-    },
-    {
-      "id": "mt9t8k5rrfu8",
-      "name": "Полина",
-      "subject": "Roblox",
-      "color": "#C2D8F2",
-      "topics": [],
-      "attendance": [],
-      "homework": [],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "schedule": {
-        "slots": []
-      },
-      "results": []
-    },
-    {
-      "id": "mtsplifbbg6j",
-      "name": "пробные",
-      "subject": "Математика",
-      "color": "#DCC9EE",
-      "topics": [],
-      "attendance": [],
-      "homework": [],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": []
-      }
-    },
-    {
-      "id": "mtv3frp96h0y",
-      "name": "Алёна Шапарева 10",
-      "subject": "Математика ЕГЭ база",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mtv3g8sxf7rr",
-          "text": "Занятие-знакомство",
-          "done": true,
-          "planDate": "2026-09-09",
-          "doneDate": "2026-09-09"
-        },
-        {
-          "id": "mtv3gn65w3n1",
-          "text": "Прототип 1 ЕГЭ база",
-          "done": true,
-          "planDate": "2026-09-10",
-          "doneDate": "2026-09-10"
-        },
-        {
-          "id": "mu130tjwijal",
-          "text": "Прототип 1 ЕГЭ база, 14-17, +задачи, которые Алена не поняла в школе",
-          "done": true,
-          "planDate": "2026-09-14",
-          "doneDate": "2026-09-14"
-        },
-        {
-          "id": "mu13lxayely0",
-          "text": "Прототип 1 ЕГЭ база, 20-",
-          "done": true,
-          "planDate": "2026-09-17",
-          "doneDate": "2026-09-17"
-        },
-        {
-          "id": "mu9j3fu18e5m",
-          "text": "Прототип 1",
-          "done": true,
-          "planDate": "2026-09-21",
-          "doneDate": "2026-09-21"
-        },
-        {
-          "id": "mufgz60hant8",
-          "text": "Прототип 2,3,4 + 30минут",
-          "done": true,
-          "planDate": "2026-09-24",
-          "doneDate": "2026-09-24"
-        },
-        {
-          "id": "mufgzdrxcf4v",
-          "text": "Прототип 4",
-          "done": true,
-          "planDate": "2026-09-28",
-          "doneDate": "2026-09-28"
-        },
-        {
-          "id": "mupfi74mkh0v",
-          "text": "Прототип 5, 6",
-          "done": true,
-          "planDate": "2026-10-01",
-          "doneDate": "2026-10-01"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mtvgs5nq2nip",
-          "date": "2026-09-10",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu12zh90rcvq",
-          "date": "2026-09-14",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu5hn5n210sh",
-          "date": "2026-09-17",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jgll7rjm6",
-          "date": "2026-09-21",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jgqxg55nx",
-          "date": "2026-09-24",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jguxwe9ad",
-          "date": "2026-09-28",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mujza5w6zn3g",
-          "date": "2026-10-01",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqtf60jrg2",
-          "date": "2026-10-05",
-          "present": false,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqthzb35es",
-          "date": "2026-10-08",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mtvgseryy3yy",
-          "text": "Задачи 8, 10, 12",
-          "due": "2026-09-14",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu1315b8mcnj",
-          "text": "Задачи 16,18,19",
-          "due": "2026-09-17",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mupfiubuyjh0",
-          "text": "дз6",
-          "due": "2026-10-01",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mupfj2vmapqg",
-          "text": "дз7",
-          "due": "2026-10-05",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://app.holst.so/board/63168d45-49c1-44ec-ba16-2d690da9d077",
-      "links": [],
-      "hourlyRate": 900,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "чт",
-            "time": "17:00",
-            "duration": 60
-          },
-          {
-            "day": "пн",
-            "time": "15:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "mtwhzlw7ddis",
-      "name": "Семён Прядуха 6",
-      "subject": "Математика 6 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mtwi1fy9xsmt",
-          "text": "Введение в 6 класс, решение уравнений",
-          "done": true,
-          "planDate": "2026-09-11",
-          "doneDate": "2026-09-11"
-        },
-        {
-          "id": "mu291r9qohax",
-          "text": "Проценты",
-          "done": true,
-          "planDate": "2026-09-15",
-          "doneDate": "2026-09-15"
-        },
-        {
-          "id": "mu52stvi6bfr",
-          "text": "Круговые диаграммы, геометрические фигуры, проценты",
-          "done": true,
-          "planDate": "2026-09-17",
-          "doneDate": "2026-09-17"
-        },
-        {
-          "id": "mu9j26ghyoal",
-          "text": "Виды треугольников",
-          "done": true,
-          "planDate": "2026-09-22",
-          "doneDate": "2026-09-22"
-        },
-        {
-          "id": "mum7qrtzc0uh",
-          "text": "Разбор дз, среднее арифметические, множества",
-          "done": true,
-          "planDate": "2026-09-29",
-          "doneDate": "2026-09-29"
-        },
-        {
-          "id": "mup2pr7yqn7s",
-          "text": "Простые и составные числа. Разложение числа на простые множители. Признаки делимости числа.",
-          "done": true,
-          "planDate": "2026-10-01",
-          "doneDate": "2026-10-01"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mu291uve999l",
-          "date": "2026-09-15",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu2930a9sfoq",
-          "date": "2026-09-11",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu52swj65g7w",
-          "date": "2026-09-17",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jh19cx06z",
-          "date": "2026-09-22",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujzad3d5i4l",
-          "date": "2026-09-29",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujzag65mnbn",
-          "date": "2026-10-01",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqtmbf0f4m",
-          "date": "2026-10-06",
-          "present": false,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqtopv0gfw",
-          "date": "2026-10-08",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mtwid460dbsu",
-          "text": "решить уравнения 1-3",
-          "due": "2026-09-18",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu2928weyw8s",
-          "text": "Решить 3 задачи с процентами",
-          "due": "2026-09-17",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mu52theybfk1",
-          "text": "Решить 2 задачи с процентами",
-          "due": "2026-09-22",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "muc7vxa7goyj",
-          "text": "Построить треугольник, определить виды треугольников",
-          "due": "2026-09-24",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mum7r3jrbak4",
-          "text": "дз 5",
-          "due": "2026-10-01",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mup1aiz1q1mp",
-          "text": "дз6",
-          "due": "2026-10-06",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "вт",
-            "time": "11:00",
-            "duration": 60
-          },
-          {
-            "day": "чт",
-            "time": "11:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "mtwloyyhnchk",
-      "name": "София Кудашева 11",
-      "subject": "Математика ЕГЭ база",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mu40l4mbdb2l",
-          "text": "Прототип 1",
-          "done": true,
-          "planDate": "2026-09-16",
-          "doneDate": "2026-09-16"
-        },
-        {
-          "id": "mu9j5vf283j4",
-          "text": "Прототип 1",
-          "done": true,
-          "planDate": "2026-09-23",
-          "doneDate": "2026-09-23"
-        },
-        {
-          "id": "mupajoizwq8m",
-          "text": "Прототип 2, 3, начали 4",
-          "done": true,
-          "planDate": "2026-09-30",
-          "doneDate": "2026-09-30"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mu40l70n9dzp",
-          "date": "2026-09-16",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jh8ygojfv",
-          "date": "2026-09-23",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujzavshqxmp",
-          "date": "2026-09-30",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqtwen8zly",
-          "date": "2026-10-07",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mu40m5pjg2yf",
-          "text": "Прототип 1: 8,10,12",
-          "due": "2026-09-23",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mupakflnn2xg",
-          "text": "прототип 1",
-          "due": "2026-09-30",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mupakrx8e30q",
-          "text": "прототип 2,3,4",
-          "due": "2026-10-07",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://app.holst.so/board/cd64626b-66bb-4061-942b-3007a5962f0a",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "ср",
-            "time": "17:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "mu25fvks03se",
-      "name": "Максим 7 50235",
-      "subject": "Математика 7 класс 45",
-      "color": "#C2D8F2",
-      "topics": [
-        {
-          "id": "mu2p3a2nkplb",
-          "text": "Вводное занятие, тестирование",
-          "done": true,
-          "planDate": "2026-09-16",
-          "doneDate": "2026-09-16"
-        },
-        {
-          "id": "mu9j5bp7bnl9",
-          "text": "Дроби, вычисления, выражения (лист 1)",
-          "done": true,
-          "planDate": "2026-09-23",
-          "doneDate": "2026-09-23"
-        },
-        {
-          "id": "munp5sll8sr6",
-          "text": "Выражения и их преобразования",
-          "done": true,
-          "planDate": "2026-09-30",
-          "doneDate": "2026-09-30"
-        },
-        {
-          "id": "munqwxj7f2p8",
-          "text": "Выражения или уравнения",
-          "done": false,
-          "planDate": "2026-10-07",
-          "doneDate": ""
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mu3qt8zmig50",
-          "date": "2026-09-16",
-          "present": true,
-          "note": "сложно уравнения, начали изучать выражения"
-        },
-        {
-          "id": "mu9jhcvflkap",
-          "date": "2026-09-23",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujzb1u9glf9",
-          "date": "2026-09-30",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqstngqp6r",
-          "date": "2026-10-07",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mu3rjd3rv7u5",
-          "text": "Дз на листе 1",
-          "due": "2026-09-23",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "mudqpl6k74g5",
-          "text": "Дз на листе 1",
-          "due": "2026-09-30",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "munqsmr08fvi",
-          "text": "Дз на листе 3",
-          "due": "2026-10-07",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://boards.yandex.ru/whiteboard/?hash=7e2db431acecd6b57dcb28d21118775d",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "ср",
-            "time": "13:00",
-            "duration": 45
-          }
-        ]
-      }
-    },
-    {
-      "id": "mu3rb4lvoyvz",
-      "name": "Даша Копейкина 7",
-      "subject": "Математика 7 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mu6pjwd8uv2f",
-          "text": "Пробное",
-          "done": true,
-          "planDate": "2026-09-17",
-          "doneDate": "2026-09-17"
-        },
-        {
-          "id": "mu9jf4a6u66c",
-          "text": "Числа, дроби, выражения",
-          "done": true,
-          "planDate": "2026-09-24",
-          "doneDate": "2026-09-24"
-        },
-        {
-          "id": "mupb1arexmh0",
-          "text": "Преобразования выражений",
-          "done": true,
-          "planDate": "2026-10-01",
-          "doneDate": "2026-10-01"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mu6pk3a9c49m",
-          "date": "2026-09-17",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mu9jhgwsx5xf",
-          "date": "2026-09-24",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mufgxxq5xo0z",
-          "date": "2026-10-01",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqu323mj7d",
-          "date": "2026-10-08",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mufgyd891xvf",
-          "text": "1",
-          "due": "2026-09-24",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mupfphllwk9g",
-          "text": "дз2",
-          "due": "2026-10-01",
-          "status": "pending",
-          "images": []
-        },
-        {
-          "id": "mupfpm9p6vsl",
-          "text": "дз3",
-          "due": "2026-10-08",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "чт",
-            "time": "16:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "mudhm84chus6",
-      "name": "Ермолай 7",
-      "subject": "Математика 7 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mudhn10gwa9x",
-          "text": "Входной контроль, первое занятие",
-          "done": true,
-          "planDate": "2026-09-23",
-          "doneDate": "2026-09-23"
-        },
-        {
-          "id": "muf0kyv87jwf",
-          "text": "Выражения с переменными, выражения с дробями",
-          "done": true,
-          "planDate": "2026-09-24",
-          "doneDate": "2026-09-24"
-        },
-        {
-          "id": "muggymafv983",
-          "text": "Приведение подобных слагаемых",
-          "done": true,
-          "planDate": "2026-09-25",
-          "doneDate": "2026-09-25"
-        },
-        {
-          "id": "mum7rtuviaqs",
-          "text": "Уравнения с одной переменной, степени",
-          "done": true,
-          "planDate": "2026-09-29",
-          "doneDate": "2026-09-29"
-        },
-        {
-          "id": "mup0byyu3eep",
-          "text": "Начальные геометрические сведения. Смежные и вертикальные углы",
-          "done": true,
-          "planDate": "2026-10-01",
-          "doneDate": "2026-10-01"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mudhn3skwsty",
-          "date": "2026-09-23",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "muevs00sexui",
-          "date": "2026-09-24",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "muevs2m8lt2x",
-          "date": "2026-09-25",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujzb831uyqp",
-          "date": "2026-09-29",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "mujzbl9pv3fd",
-          "date": "2026-10-01",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqudj3z90l",
-          "date": "2026-10-06",
-          "present": false,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munquge3pkms",
-          "date": "2026-10-08",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mudmz0p38qlv",
-          "text": "3 уравнения лист 1",
-          "due": "2026-09-23",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "muf0lmxsaehl",
-          "text": "дз2",
-          "due": "2026-09-25",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "muggz29b2wzs",
-          "text": "дз 3",
-          "due": "2026-09-25",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mum7s9w34ljd",
-          "text": "дз 4",
-          "due": "2026-10-01",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mup0ca7u4sja",
-          "text": "дз5",
-          "due": "2026-10-06",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [
-        {
-          "id": "mudmzdnz5579",
-          "text": "теряет знаки",
-          "date": "2026-09-23"
-        }
-      ],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "вт",
-            "time": "10:00",
-            "duration": 60
-          },
-          {
-            "day": "чт",
-            "time": "10:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "mue5adhwk5ue",
-      "name": "Варвара 6",
-      "subject": "Математика 6 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "muf0m2c80xvp",
-          "text": "Понятие множества",
-          "done": true,
-          "planDate": "2026-09-24",
-          "doneDate": "2026-09-24"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "muf0m4i4sc3z",
-          "date": "2026-09-24",
-          "present": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "muf0m7zcm8v3",
-          "text": "дз1",
-          "due": "2026-09-24",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": []
-      }
-    },
-    {
-      "id": "mufh06ex2lv5",
-      "name": "Артем 7",
-      "subject": "пробное 7 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "munp4rtychz7",
-          "text": "Выражения и их преобразования",
-          "done": true,
-          "planDate": "2026-09-30",
-          "doneDate": "2026-09-30"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mujzbzt14ggx",
-          "date": "2026-09-30",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munp50at8ro8",
-          "date": "2026-10-05",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "munp597adwwi",
-          "text": "дз1",
-          "due": "2026-10-05",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "пн",
-            "time": "11:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "muktps1sjruh",
-      "name": "Варвара 8",
-      "subject": "Математика 8 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mup9s5rygip5",
-          "text": "Формулы сокращенного умножения. Упрощение выражений",
-          "done": true,
-          "planDate": "2026-09-30",
-          "doneDate": "2026-09-30"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "munj1bkspjvg",
-          "date": "2026-09-30",
-          "present": true,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mup9sdvz190o",
-          "text": "дз1",
-          "due": "2026-10-07",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://app.holst.so/invite/44a7d497-16b9-4743-9fec-60ee40acb87d",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "ср",
-            "time": "16:00",
-            "duration": 60
-          }
-        ]
-      }
-    },
-    {
-      "id": "mul2in7zrgo4",
-      "name": "Валера 8",
-      "subject": "Математика 8 класс",
-      "color": "#F0E0A8",
-      "topics": [
-        {
-          "id": "mumdy9cabzzc",
-          "text": "Диагностическое занятие, формулы сокращенного умножения, задачи с треугольниками, вероятность и статистика",
-          "done": true,
-          "planDate": "2026-09-29",
-          "doneDate": "2026-09-29"
-        },
-        {
-          "id": "mup8tayz6c2r",
-          "text": "Формула разности квадратов. Переведение обыкновенных дробей в десятичные.",
-          "done": true,
-          "planDate": "2026-10-01",
-          "doneDate": "2026-10-01"
-        }
-      ],
-      "attendance": [
-        {
-          "id": "mumdyc1ac6qb",
-          "date": "2026-09-29",
-          "present": true,
-          "note": ""
-        },
-        {
-          "id": "mumdyfi6ihrq",
-          "date": "2026-10-01",
-          "present": true,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munquxv7x1jf",
-          "date": "2026-10-06",
-          "present": false,
-          "planned": true,
-          "note": ""
-        },
-        {
-          "id": "munqv0z3tbsw",
-          "date": "2026-10-08",
-          "present": false,
-          "planned": true,
-          "note": ""
-        }
-      ],
-      "homework": [
-        {
-          "id": "mup8tw5fkr8b",
-          "text": "дз1 (разложение на множители)",
-          "due": "2026-10-01",
-          "status": "done",
-          "images": []
-        },
-        {
-          "id": "mup8u9d7k3il",
-          "text": "дз2 (формула разности квадратов)",
-          "due": "2026-10-06",
-          "status": "pending",
-          "images": []
-        }
-      ],
-      "boardUrl": "https://app.holst.so/board/530ae0a6-0fec-4e0b-9f3f-08abe8aa4fdd",
-      "links": [],
-      "hourlyRate": 1500,
-      "payments": [],
-      "mistakes": [],
-      "results": [],
-      "schedule": {
-        "slots": [
-          {
-            "day": "вт",
-            "time": "14:00",
-            "duration": 60
-          },
-          {
-            "day": "чт",
-            "time": "14:00",
-            "duration": 60
-          }
-        ]
-      }
-    }
-  ],
-  "activeId": "mt9ryxs81ac4",
-  "templates": [],
-  "view": "dashboard",
-  "breaks": [
-    {
-      "id": "brk_пн1300",
-      "day": "пн",
-      "time": "13:00",
-      "duration": 60,
-      "label": "Перерыв"
-    },
-    {
-      "id": "brk_пн1400",
-      "day": "пн",
-      "time": "14:00",
-      "duration": 60,
-      "label": "Перерыв"
-    },
-    {
-      "id": "brk_вт1300",
-      "day": "вт",
-      "time": "13:00",
-      "duration": 60,
-      "label": "Перерыв"
-    },
-    {
-      "id": "brk_ср1200",
-      "day": "ср",
-      "time": "12:00",
-      "duration": 60,
-      "label": "Перерыв"
-    },
-    {
-      "id": "brk_ср1500",
-      "day": "ср",
-      "time": "15:00",
-      "duration": 60,
-      "label": "Перерыв"
-    },
-    {
-      "id": "brk_чт1300",
-      "day": "чт",
-      "time": "13:00",
-      "duration": 60,
-      "label": "Перерыв"
-    },
-    {
-      "id": "brk_чт1500",
-      "day": "чт",
-      "time": "15:00",
-      "duration": 60,
-      "label": "Перерыв"
-    }
-  ]
-};
-  state = seedData;
-  save();
+  // Seed real data if localStorage is empty (first launch on new device)
+  if (state.students.length === 0) {
+    const seedData = {"students":[{"id":"mt9rx814bjvl","name":"Таютка","subject":"Математика 9 класс","color":"#EEC2E2","topics":[{"id":"mt9ry1ngzhze","text":"Задания 1-5 (связь)","done":true,"planDate":"2026-07-02","doneDate":"2026-07-02"},{"id":"mtblg35fkk77","text":"Задания 1-5 (участки)","done":true,"planDate":"2026-08-27","doneDate":"2026-08-27"},{"id":"mtbmuth5f57z","text":"Задания 1-5 (участки)","done":true,"planDate":"2026-09-03","doneDate":"2026-09-03"},{"id":"mtl99dhzm96h","text":"Задания 1-5 (листы)","done":false,"planDate":"2026-09-06","doneDate":""}],"attendance":[{"id":"mt9tea3rv5n7","date":"2026-07-20","present":true,"note":""},{"id":"mtbmt4kd02fh","date":"2026-08-27","present":true,"note":""},{"id":"mtl8uyoikdbx","date":"2026-09-03","present":true,"note":"завершили участки"},{"id":"mtl99rzncha8","date":"2026-09-06","present":false,"planned":true,"note":""}],"homework":[{"id":"mtblgpx7fd3h","text":"Задачи 1 на листе 3 (участки)","due":"2026-08-27","status":"done","images":[]},{"id":"mtbmt12h6bry","text":"решить задания 2-5 на листе 3 по одной из задач","due":"2026-09-03","status":"pending","images":[]},{"id":"mtl93qnntvoa","text":"Решить задачи 1-5 вариант 9 из сборника Ященко","due":"2026-09-10","status":"pending","images":[]}],"boardUrl":"","links":[{"id":"mtl689t52o59","title":"Телемост","url":"https://telemost.yandex.ru/j/04567774560275"}],"hourlyRate":0,"payments":[],"mistakes":[],"schedule":{"slots":[]},"results":[]},{"id":"mt9ryxs81ac4","name":"Лера 9","subject":"Математика 9 класс","color":"#D2DCC0","topics":[{"id":"mt9rzpp7tsg9","text":"Первое пробное занятие","done":true,"planDate":"2026-08-13","doneDate":"2026-08-13"},{"id":"mt9s0fjri4zq","text":"Пробник ОГЭ 1 часть","done":true,"planDate":"2026-08-20","doneDate":"2026-08-20"},{"id":"mtmrxkscs2y6","text":"1-5 (участки) начали + разбирали дз","done":true,"planDate":"2026-09-04","doneDate":"2026-09-04"},{"id":"mtskd2kyvqaj","text":"Векторы + действительные числа (разбор школьного дз)","done":true,"planDate":"2026-09-08","doneDate":"2026-09-08"},{"id":"mtwtpqnuri3d","text":"Степени(алгебра), 1-5 (участки) закончили","done":true,"planDate":"2026-09-11","doneDate":"2026-09-11"},{"id":"mu2jicgeeu2t","text":"1-5 (участки) + 1-5 (листы) + работа с векторами","done":true,"planDate":"2026-09-15","doneDate":"2026-09-15"},{"id":"mu6thd1jj89d","text":"1-5 (листы) закончили, начали 1-5 (шины)","done":true,"planDate":"2026-09-18","doneDate":"2026-09-18"},{"id":"mu9hofqo51vw","text":"1-5 (шины)","done":true,"planDate":"2026-09-22","doneDate":"2026-09-22"},{"id":"mugtzlm1yh3y","text":"Завершили 1-5 (шины), начали 1-5 (печи)","done":true,"planDate":"2026-09-25","doneDate":"2026-09-25"},{"id":"mumilggqglo3","text":"Разбор пробника, + задачи 1-5 (шины)","done":true,"planDate":"2026-09-29","doneDate":"2026-09-29"}],"attendance":[{"id":"mt9s0tv3clq0","date":"2026-08-13","present":true,"note":""},{"id":"mt9s0w7rj2mz","date":"2026-08-20","present":true,"note":"пробник: сложно геометрия, графики, эйлера"},{"id":"mtmtle7tpb5z","date":"2026-09-04","present":true,"note":""},{"id":"mtske7y9qxwv","date":"2026-09-08","present":true,"note":""},{"id":"mtwtox5yze9o","date":"2026-09-11","present":true,"note":""},{"id":"mu2jkrcb7gsp","date":"2026-09-15","present":true,"note":""},{"id":"mu6thiib56rs","date":"2026-09-18","present":true,"note":""},{"id":"mu9jfrfbmiok","date":"2026-09-22","present":true,"planned":true,"note":""},{"id":"mu9jfulv0gqu","date":"2026-09-25","present":true,"planned":true,"note":""},{"id":"mu9jfyef9r5p","date":"2026-09-29","present":true,"planned":true,"note":""},{"id":"mujz9vjerofx","date":"2026-10-02","present":false,"planned":true,"note":""}],"homework":[{"id":"mt9s1xlbvu3n","text":"1-5 1 лист","due":"2026-08-20","status":"done","images":[]},{"id":"mt9s29342rhc","text":"1-5 пробник 2 лист","due":"2026-08-26","status":"done","images":[]},{"id":"mtmthw6yimg3","text":"1-5 на листе 3","due":"2026-09-08","status":"done","images":[]},{"id":"mtskdx29h18d","text":"1-5 на листе 3","due":"2026-09-11","status":"done","images":[]},{"id":"mtwtouia05v5","text":"1-5 на листе 3 (вариант 9)","due":"2026-09-15","status":"done","images":[]},{"id":"mu2jm19myct5","text":"1-4 на листе 5 (отмечено ДЗ)","due":"2026-09-17","status":"done","images":[]},{"id":"mu6tif8b6tvo","text":"Решить задачу 4 типа на листе 6 (отмечено ДЗ)","due":"2026-09-22","status":"pending","images":[]},{"id":"muciqnsawd8v","text":"Задачи 1-5 вариант 23 на листе 6","due":"2026-09-25","status":"pending","images":[]},{"id":"mugu08dladnj","text":"Пробник","due":"2026-09-28","status":"done","images":[]},{"id":"mumieh1fwbg2","text":"Задачи 1-5 вариант 25 (шины) на листе 7","due":"2026-10-02","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=f7722c924772faf4f69a8a07a5cec54c","links":[{"id":"mt9s3qx31549","title":"Телемост","url":"https://telemost.yandex.ru/j/91148898812493"},{"id":"mt9s40z7990z","title":"1 пробник результаты добавить","url":"https://oge.sdamgia.ru/test?a=show_result&stat_id=140760230&retriable=1"}],"hourlyRate":900,"payments":[{"id":"mtjmazm4tagt","date":"2026-08-20","amount":1500,"paid":true},{"id":"mu6tj9ibf68o","date":"2026-09-15","amount":900,"paid":true},{"id":"mucir0y2hlgr","date":"2026-09-22","amount":900,"paid":true}],"mistakes":[{"id":"mtjmibdok93e","text":"Геометрия сложно корни, графики","date":"2026-09-02"},{"id":"mtjmilhn6t4q","text":"прошла участки, путь","date":"2026-09-02"}],"schedule":{"slots":[{"day":"вт","time":"15:30","duration":90},{"day":"пт","time":"16:00","duration":90}]},"results":[{"id":"mumledgmsljz","title":"Пробный сентябрь","type":"","date":"2026-09-29","score":6,"maxScore":19,"comment":"https://oge.sdamgia.ru/test?a=show_result&stat_id=142058335&retriable=1","images":[]}]},{"id":"mt9s4hrjsfn5","name":"Дарья Зинина 7","subject":"Математика 7 класс","color":"#D2DCC0","topics":[{"id":"mt9s50k3mnso","text":"Пробное занятие","done":true,"planDate":"2026-08-21","doneDate":"2026-08-21"},{"id":"mtjmda1ujlym","text":"Повторение 6 класса: таблица умножения, порядок действий, обыкновенные и десятичные дроби, выражения","done":true,"planDate":"2026-09-02","doneDate":"2026-09-02"},{"id":"mto3u4t4lqkj","text":"Разбор основных тем 6 класса, введение в 7 класс в формате \"Своя игра\"","done":true,"planDate":"2026-09-07","doneDate":"2026-09-07"},{"id":"mttkomxcr4h8","text":"Разбор темы \"Рациональные числа\", \"Выражения\", вспомнили проценты, решали примеры повышенного уровня сложности","done":true,"planDate":"2026-09-09","doneDate":"2026-09-09"},{"id":"mu0q2e8ucghx","text":"Выражения с переменными, задачи на проценты и части","done":true,"planDate":"2026-09-14","doneDate":"2026-09-14"},{"id":"mu6fsfvdrmcz","text":"Выражения и их преобразования","done":true,"planDate":"2026-09-18","doneDate":"2026-09-18"},{"id":"muaq4yca49vd","text":"Линейное уравнение с одной переменной","done":true,"planDate":"2026-09-21","doneDate":"2026-09-21"},{"id":"muaq596ere3a","text":"Линейные уравнения со скобками и дробями","done":true,"planDate":"2026-09-23","doneDate":"2026-09-23"},{"id":"muaq5n2ifxga","text":"Проверочная работа","done":true,"planDate":"2026-09-28","doneDate":"2026-09-28"},{"id":"munnk50dn467","text":"Разбор сложных заданий проверочной работы + преобразования выражений","done":true,"planDate":"2026-09-30","doneDate":"2026-09-30"},{"id":"munnmbyanw2v","text":"Линейные уравнения (продолжение)","done":false,"planDate":"2026-10-05","doneDate":""},{"id":"mupad8ygg3s5","text":"Геометрия: основы + вертикальные и смежные углы","done":false,"planDate":"2026-10-05","doneDate":""}],"attendance":[{"id":"mt9s5crb0tyk","date":"2026-08-21","present":true,"note":""},{"id":"mtjmeglytq6e","date":"2026-09-02","present":true,"note":""},{"id":"mtjmesby6i0f","date":"2026-09-07","present":true,"planned":true,"note":""},{"id":"mtjmevg2r99a","date":"2026-09-09","present":true,"planned":true,"note":"Добавили примеры повышенного уровня сложности, Даша отлично справляется, подсказки требуются минимальные, в основном решает сама. В итогах урока отметила, что такие примеры даются ей сложновато, будем постепенно добавлять их в занятия"},{"id":"mtjmexvqo98r","date":"2026-09-14","present":true,"planned":true,"note":""},{"id":"mtjmf2926l26","date":"2026-09-21","present":true,"planned":true,"note":"сложные уравнения с несколькими действиями даются трудновато, теряем знаки при умножении"},{"id":"mtjmf416e1xw","date":"2026-09-23","present":true,"planned":true,"note":""},{"id":"mtjmf5wut2rg","date":"2026-09-28","present":true,"planned":true,"note":""},{"id":"mtjmf7n24w2f","date":"2026-09-30","present":true,"planned":true,"note":""},{"id":"mu0q2tlqqvsq","date":"2026-09-18","present":true,"planned":true,"note":"У Даши уже отлично получается раскрывать скобки, решали примеры трех уровней сложности, Даша во всех показала хороший результат, иногда теряет минусы при вычислениях, иногда путается с отрицательными числами"}],"homework":[{"id":"mtjme75yvqos","text":"Лист 2, дз отмечено галочками (выражения, дроби)","due":"2026-09-07","status":"done","images":[]},{"id":"mtqps7vsz7vn","text":"Лист 2, задачи 1,4,8,10 + задача","due":"2026-09-09","status":"done","images":[]},{"id":"mttmflb4uqvb","text":"Лист 3, дз в зеленой рамке (№2(3,4), №3(3), №1(в))","due":"2026-09-14","status":"done","images":[]},{"id":"mu0y9lfk4fem","text":"Лист 4: нахождение значение выражения с двумя переменными, задача на проценты, пример","due":"2026-09-18","status":"done","images":[]},{"id":"mu6fychx3tpn","text":"Лист 5, задания 1,3,5 на слайде с дз","due":"2026-09-21","status":"done","images":[]},{"id":"muaq962gysls","text":"Лист 5, задания 2,3,5,6,7 на слайде с дз","due":"2026-09-23","status":"done","images":[]},{"id":"mukn3x92i191","text":"Лист 5, задания 1,2,3,5 на слайде с дз","due":"2026-09-28","status":"done","images":[]},{"id":"munnlimj82zl","text":"Лист 5, задание 3 (а,б,в)","due":"2026-10-05","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=b9184c82942d850c53dcca34c2078de9","links":[{"id":"mt9s76ca4lw2","title":"Телемост","url":"https://telemost.yandex.ru/j/12111138271995"},{"id":"mtjrxsnk27jp","title":"Алгебра 2024","url":"https://so.11klasov.net/9590-algebra-7-klass-uchebnik-makarychev-jun-mindjuk-ng-i-dr.html"},{"id":"mtjrzwf4mzhd","title":"Геометрия 2024","url":"https://so.11klasov.net/20711-matematika-geometrija-7-9-klassy-bazovyj-uroven-uchebnik-atanasjan-ls-butuzov-vf-kadomcev-sb-i-dr.html"}],"hourlyRate":800,"payments":[{"id":"mtihrcwdt2nv","date":"2026-09-02","amount":800,"paid":true},{"id":"mtihrgctavwo","date":"2026-09-07","amount":800,"paid":true},{"id":"mtihrla502lw","date":"2026-09-09","amount":800,"paid":true},{"id":"mtihrsx9mubj","date":"2026-09-14","amount":800,"paid":true},{"id":"mtihrvcx4e4x","date":"2026-09-16","amount":800,"paid":true},{"id":"mtihryy9bn00","date":"2026-09-21","amount":800,"paid":true},{"id":"mtihs2jd9q9j","date":"2026-09-23","amount":800,"paid":true},{"id":"mtihs539xtvg","date":"2026-09-28","amount":800,"paid":true},{"id":"mtihs7h5m5qk","date":"2026-09-30","amount":800,"paid":true}],"mistakes":[{"id":"mt9s5t2zr2av","text":"Будем работать над выражениями, операциями, таблицей умножения, минусами, знаками, процентами","date":"2026-08-26"},{"id":"mu6fzhdlv8ej","text":"Иногда теряет минусы, сложновато дается работа с отрицательными числами в больших примерах","date":"2026-09-18"},{"id":"muaqjs2e8crp","text":"Повторим приведение подобных слагаемых","date":"2026-09-21"}],"schedule":{"slots":[{"day":"пн","time":"10:00","duration":60},{"day":"ср","time":"10:00","duration":60}]},"results":[{"id":"mukwntfio8e1","title":"Проверочная работа по темам месяца","type":"","date":"2026-09-28","score":31,"maxScore":33,"comment":"результат очень хороший, есть отдельные пробелы для точечной проработки, путает минусы и плюсы, есть ошибки в счёте","images":[]}]},{"id":"mt9sz2d4jkj6","name":"Паша 9 49215","subject":"Математика 9 класс","color":"#C2D8F2","topics":[{"id":"mt9t3ew88cky","text":"1-5 (участки) закончили разбирать, разбирали дз","done":true,"planDate":"2026-08-26","doneDate":"2026-08-26"},{"id":"mt9t40bs0w6w","text":"1-5 (листы) закончить, вариант 1","done":true,"planDate":"2026-08-31","doneDate":"2026-08-31"},{"id":"mth41sedlswh","text":"завершить 1-5 (листы), начать 1-5 (шины)","done":true,"planDate":"2026-09-07","doneDate":"2026-09-07"},{"id":"mty1kiipaahq","text":"1-5 (шины)","done":true,"planDate":"2026-09-14","doneDate":"2026-09-14"},{"id":"mu1ar6zl0grc","text":"1-5 (шины)","done":true,"planDate":"2026-09-21","doneDate":"2026-09-21"},{"id":"muc4uwo3m8hu","text":"1-5 шины","done":true,"planDate":"2026-09-28","doneDate":"2026-09-28"}],"attendance":[{"id":"mt9t6yscrx0i","date":"2026-08-26","present":true,"note":""},{"id":"mth43rl1saot","date":"2026-08-31","present":true,"note":""},{"id":"mty1jmungi17","date":"2026-09-07","present":true,"note":""},{"id":"mu1aqv1xlvxd","date":"2026-09-14","present":true,"note":""},{"id":"mu9jgab3eo6o","date":"2026-09-21","present":true,"planned":true,"note":""},{"id":"mu9jgcgzmd9s","date":"2026-09-28","present":true,"planned":true,"note":""},{"id":"munqt9gwzt8b","date":"2026-10-05","present":false,"planned":true,"note":""}],"homework":[{"id":"mt9t6u0kn41r","text":"1-5 листы вариант 2","due":"2026-08-31","status":"done","images":[]},{"id":"mth42md56q2v","text":"решить задачи 1-5 (листы) вариант 21 на листе 16","due":"2026-09-07","status":"done","images":[]},{"id":"mty1k5ojh0sc","text":"1-3 шины","due":"2026-09-14","status":"done","images":[]},{"id":"mu1arl7hytfe","text":"5 шины","due":"2026-09-21","status":"pending","images":[]},{"id":"muc4vehb0fv8","text":"1-5 шины","due":"2026-09-28","status":"done","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=3bab91c1b1983c516fcf794d62821200","links":[],"hourlyRate":1500,"payments":[],"mistakes":[{"id":"mth43cwhao9h","text":"разобрать еще задачи 5 типа с листами про высоту шрифта в пунктах","date":"2026-08-31"}],"schedule":{"slots":[{"day":"пн","time":"16:00"}]},"results":[]},{"id":"mt9t8k5rrfu8","name":"Полина","subject":"Roblox","color":"#C2D8F2","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"schedule":{"slots":[]},"results":[]},{"id":"mtsplifbbg6j","name":"пробные","subject":"Математика","color":"#DCC9EE","topics":[],"attendance":[],"homework":[],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[]}},{"id":"mtv3frp96h0y","name":"Алёна Шапарева 10","subject":"Математика ЕГЭ база","color":"#F0E0A8","topics":[{"id":"mtv3g8sxf7rr","text":"Занятие-знакомство","done":true,"planDate":"2026-09-09","doneDate":"2026-09-09"},{"id":"mtv3gn65w3n1","text":"Прототип 1 ЕГЭ база","done":true,"planDate":"2026-09-10","doneDate":"2026-09-10"},{"id":"mu130tjwijal","text":"Прототип 1 ЕГЭ база, 14-17, +задачи, которые Алена не поняла в школе","done":true,"planDate":"2026-09-14","doneDate":"2026-09-14"},{"id":"mu13lxayely0","text":"Прототип 1 ЕГЭ база, 20-","done":true,"planDate":"2026-09-17","doneDate":"2026-09-17"},{"id":"mu9j3fu18e5m","text":"Прототип 1","done":true,"planDate":"2026-09-21","doneDate":"2026-09-21"},{"id":"mufgz60hant8","text":"Прототип 2,3,4 + 30минут","done":true,"planDate":"2026-09-24","doneDate":"2026-09-24"},{"id":"mufgzdrxcf4v","text":"Прототип 4","done":true,"planDate":"2026-09-28","doneDate":"2026-09-28"},{"id":"mupfi74mkh0v","text":"Прототип 5, 6","done":true,"planDate":"2026-10-01","doneDate":"2026-10-01"}],"attendance":[{"id":"mtvgs5nq2nip","date":"2026-09-10","present":true,"note":""},{"id":"mu12zh90rcvq","date":"2026-09-14","present":true,"note":""},{"id":"mu5hn5n210sh","date":"2026-09-17","present":true,"note":""},{"id":"mu9jgll7rjm6","date":"2026-09-21","present":true,"note":""},{"id":"mu9jgqxg55nx","date":"2026-09-24","present":true,"note":""},{"id":"mu9jguxwe9ad","date":"2026-09-28","present":true,"note":""},{"id":"mujza5w6zn3g","date":"2026-10-01","present":true,"planned":true,"note":""},{"id":"munqtf60jrg2","date":"2026-10-05","present":false,"planned":true,"note":""},{"id":"munqthzb35es","date":"2026-10-08","present":false,"planned":true,"note":""}],"homework":[{"id":"mtvgseryy3yy","text":"Задачи 8, 10, 12","due":"2026-09-14","status":"done","images":[]},{"id":"mu1315b8mcnj","text":"Задачи 16,18,19","due":"2026-09-17","status":"done","images":[]},{"id":"mupfiubuyjh0","text":"дз6","due":"2026-10-01","status":"done","images":[]},{"id":"mupfj2vmapqg","text":"дз7","due":"2026-10-05","status":"pending","images":[]}],"boardUrl":"https://app.holst.so/board/63168d45-49c1-44ec-ba16-2d690da9d077","links":[],"hourlyRate":900,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"чт","time":"17:00","duration":60},{"day":"пн","time":"15:00","duration":60}]}},{"id":"mtwhzlw7ddis","name":"Семён Прядуха 6","subject":"Математика 6 класс","color":"#F0E0A8","topics":[{"id":"mtwi1fy9xsmt","text":"Введение в 6 класс, решение уравнений","done":true,"planDate":"2026-09-11","doneDate":"2026-09-11"},{"id":"mu291r9qohax","text":"Проценты","done":true,"planDate":"2026-09-15","doneDate":"2026-09-15"},{"id":"mu52stvi6bfr","text":"Круговые диаграммы, геометрические фигуры, проценты","done":true,"planDate":"2026-09-17","doneDate":"2026-09-17"},{"id":"mu9j26ghyoal","text":"Виды треугольников","done":true,"planDate":"2026-09-22","doneDate":"2026-09-22"},{"id":"mum7qrtzc0uh","text":"Разбор дз, среднее арифметические, множества","done":true,"planDate":"2026-09-29","doneDate":"2026-09-29"},{"id":"mup2pr7yqn7s","text":"Простые и составные числа. Разложение числа на простые множители. Признаки делимости числа.","done":true,"planDate":"2026-10-01","doneDate":"2026-10-01"}],"attendance":[{"id":"mu291uve999l","date":"2026-09-15","present":true,"note":""},{"id":"mu2930a9sfoq","date":"2026-09-11","present":true,"note":""},{"id":"mu52swj65g7w","date":"2026-09-17","present":true,"note":""},{"id":"mu9jh19cx06z","date":"2026-09-22","present":true,"planned":true,"note":""},{"id":"mujzad3d5i4l","date":"2026-09-29","present":true,"planned":true,"note":""},{"id":"mujzag65mnbn","date":"2026-10-01","present":true,"planned":true,"note":""},{"id":"munqtmbf0f4m","date":"2026-10-06","present":false,"planned":true,"note":""},{"id":"munqtopv0gfw","date":"2026-10-08","present":false,"planned":true,"note":""}],"homework":[{"id":"mtwid460dbsu","text":"решить уравнения 1-3","due":"2026-09-18","status":"done","images":[]},{"id":"mu2928weyw8s","text":"Решить 3 задачи с процентами","due":"2026-09-17","status":"done","images":[]},{"id":"mu52theybfk1","text":"Решить 2 задачи с процентами","due":"2026-09-22","status":"done","images":[]},{"id":"muc7vxa7goyj","text":"Построить треугольник, определить виды треугольников","due":"2026-09-24","status":"done","images":[]},{"id":"mum7r3jrbak4","text":"дз 5","due":"2026-10-01","status":"done","images":[]},{"id":"mup1aiz1q1mp","text":"дз6","due":"2026-10-06","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"вт","time":"11:00","duration":60},{"day":"чт","time":"11:00","duration":60}]}},{"id":"mtwloyyhnchk","name":"София Кудашева 11","subject":"Математика ЕГЭ база","color":"#F0E0A8","topics":[{"id":"mu40l4mbdb2l","text":"Прототип 1","done":true,"planDate":"2026-09-16","doneDate":"2026-09-16"},{"id":"mu9j5vf283j4","text":"Прототип 1","done":true,"planDate":"2026-09-23","doneDate":"2026-09-23"},{"id":"mupajoizwq8m","text":"Прототип 2, 3, начали 4","done":true,"planDate":"2026-09-30","doneDate":"2026-09-30"}],"attendance":[{"id":"mu40l70n9dzp","date":"2026-09-16","present":true,"note":""},{"id":"mu9jh8ygojfv","date":"2026-09-23","present":true,"planned":true,"note":""},{"id":"mujzavshqxmp","date":"2026-09-30","present":true,"planned":true,"note":""},{"id":"munqtwen8zly","date":"2026-10-07","present":false,"planned":true,"note":""}],"homework":[{"id":"mu40m5pjg2yf","text":"Прототип 1: 8,10,12","due":"2026-09-23","status":"done","images":[]},{"id":"mupakflnn2xg","text":"прототип 1","due":"2026-09-30","status":"done","images":[]},{"id":"mupakrx8e30q","text":"прототип 2,3,4","due":"2026-10-07","status":"pending","images":[]}],"boardUrl":"https://app.holst.so/board/cd64626b-66bb-4061-942b-3007a5962f0a","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"ср","time":"17:00","duration":60}]}},{"id":"mu25fvks03se","name":"Максим 7 50235","subject":"Математика 7 класс 45","color":"#C2D8F2","topics":[{"id":"mu2p3a2nkplb","text":"Вводное занятие, тестирование","done":true,"planDate":"2026-09-16","doneDate":"2026-09-16"},{"id":"mu9j5bp7bnl9","text":"Дроби, вычисления, выражения (лист 1)","done":true,"planDate":"2026-09-23","doneDate":"2026-09-23"},{"id":"munp5sll8sr6","text":"Выражения и их преобразования","done":true,"planDate":"2026-09-30","doneDate":"2026-09-30"},{"id":"munqwxj7f2p8","text":"Выражения или уравнения","done":false,"planDate":"2026-10-07","doneDate":""}],"attendance":[{"id":"mu3qt8zmig50","date":"2026-09-16","present":true,"note":"сложно уравнения, начали изучать выражения"},{"id":"mu9jhcvflkap","date":"2026-09-23","present":true,"planned":true,"note":""},{"id":"mujzb1u9glf9","date":"2026-09-30","present":true,"planned":true,"note":""},{"id":"munqstngqp6r","date":"2026-10-07","present":false,"planned":true,"note":""}],"homework":[{"id":"mu3rjd3rv7u5","text":"Дз на листе 1","due":"2026-09-23","status":"pending","images":[]},{"id":"mudqpl6k74g5","text":"Дз на листе 1","due":"2026-09-30","status":"pending","images":[]},{"id":"munqsmr08fvi","text":"Дз на листе 3","due":"2026-10-07","status":"pending","images":[]}],"boardUrl":"https://boards.yandex.ru/whiteboard/?hash=7e2db431acecd6b57dcb28d21118775d","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"ср","time":"13:00","duration":45}]}},{"id":"mu3rb4lvoyvz","name":"Даша Копейкина 7","subject":"Математика 7 класс","color":"#F0E0A8","topics":[{"id":"mu6pjwd8uv2f","text":"Пробное","done":true,"planDate":"2026-09-17","doneDate":"2026-09-17"},{"id":"mu9jf4a6u66c","text":"Числа, дроби, выражения","done":true,"planDate":"2026-09-24","doneDate":"2026-09-24"},{"id":"mupb1arexmh0","text":"Преобразования выражений","done":true,"planDate":"2026-10-01","doneDate":"2026-10-01"}],"attendance":[{"id":"mu6pk3a9c49m","date":"2026-09-17","present":true,"note":""},{"id":"mu9jhgwsx5xf","date":"2026-09-24","present":true,"planned":true,"note":""},{"id":"mufgxxq5xo0z","date":"2026-10-01","present":true,"planned":true,"note":""},{"id":"munqu323mj7d","date":"2026-10-08","present":false,"planned":true,"note":""}],"homework":[{"id":"mufgyd891xvf","text":"1","due":"2026-09-24","status":"done","images":[]},{"id":"mupfphllwk9g","text":"дз2","due":"2026-10-01","status":"pending","images":[]},{"id":"mupfpm9p6vsl","text":"дз3","due":"2026-10-08","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"чт","time":"16:00","duration":60}]}},{"id":"mudhm84chus6","name":"Ермолай 7","subject":"Математика 7 класс","color":"#F0E0A8","topics":[{"id":"mudhn10gwa9x","text":"Входной контроль, первое занятие","done":true,"planDate":"2026-09-23","doneDate":"2026-09-23"},{"id":"muf0kyv87jwf","text":"Выражения с переменными, выражения с дробями","done":true,"planDate":"2026-09-24","doneDate":"2026-09-24"},{"id":"muggymafv983","text":"Приведение подобных слагаемых","done":true,"planDate":"2026-09-25","doneDate":"2026-09-25"},{"id":"mum7rtuviaqs","text":"Уравнения с одной переменной, степени","done":true,"planDate":"2026-09-29","doneDate":"2026-09-29"},{"id":"mup0byyu3eep","text":"Начальные геометрические сведения. Смежные и вертикальные углы","done":true,"planDate":"2026-10-01","doneDate":"2026-10-01"}],"attendance":[{"id":"mudhn3skwsty","date":"2026-09-23","present":true,"planned":true,"note":""},{"id":"muevs00sexui","date":"2026-09-24","present":true,"planned":true,"note":""},{"id":"muevs2m8lt2x","date":"2026-09-25","present":true,"planned":true,"note":""},{"id":"mujzb831uyqp","date":"2026-09-29","present":true,"planned":true,"note":""},{"id":"mujzbl9pv3fd","date":"2026-10-01","present":true,"planned":true,"note":""},{"id":"munqudj3z90l","date":"2026-10-06","present":false,"planned":true,"note":""},{"id":"munquge3pkms","date":"2026-10-08","present":false,"planned":true,"note":""}],"homework":[{"id":"mudmz0p38qlv","text":"3 уравнения лист 1","due":"2026-09-23","status":"done","images":[]},{"id":"muf0lmxsaehl","text":"дз2","due":"2026-09-25","status":"done","images":[]},{"id":"muggz29b2wzs","text":"дз 3","due":"2026-09-25","status":"done","images":[]},{"id":"mum7s9w34ljd","text":"дз 4","due":"2026-10-01","status":"done","images":[]},{"id":"mup0ca7u4sja","text":"дз5","due":"2026-10-06","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[{"id":"mudmzdnz5579","text":"теряет знаки","date":"2026-09-23"}],"results":[],"schedule":{"slots":[{"day":"вт","time":"10:00","duration":60},{"day":"чт","time":"10:00","duration":60}]}},{"id":"mue5adhwk5ue","name":"Варвара 6","subject":"Математика 6 класс","color":"#F0E0A8","topics":[{"id":"muf0m2c80xvp","text":"Понятие множества","done":true,"planDate":"2026-09-24","doneDate":"2026-09-24"}],"attendance":[{"id":"muf0m4i4sc3z","date":"2026-09-24","present":true,"note":""}],"homework":[{"id":"muf0m7zcm8v3","text":"дз1","due":"2026-09-24","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[]}},{"id":"mufh06ex2lv5","name":"Артем 7","subject":"пробное 7 класс","color":"#F0E0A8","topics":[{"id":"munp4rtychz7","text":"Выражения и их преобразования","done":true,"planDate":"2026-09-30","doneDate":"2026-09-30"}],"attendance":[{"id":"mujzbzt14ggx","date":"2026-09-30","present":true,"planned":true,"note":""},{"id":"munp50at8ro8","date":"2026-10-05","present":false,"planned":true,"note":""}],"homework":[{"id":"munp597adwwi","text":"дз1","due":"2026-10-05","status":"pending","images":[]}],"boardUrl":"","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"пн","time":"11:00","duration":60}]}},{"id":"muktps1sjruh","name":"Варвара 8","subject":"Математика 8 класс","color":"#F0E0A8","topics":[{"id":"mup9s5rygip5","text":"Формулы сокращенного умножения. Упрощение выражений","done":true,"planDate":"2026-09-30","doneDate":"2026-09-30"}],"attendance":[{"id":"munj1bkspjvg","date":"2026-09-30","present":true,"planned":true,"note":""}],"homework":[{"id":"mup9sdvz190o","text":"дз1","due":"2026-10-07","status":"pending","images":[]}],"boardUrl":"https://app.holst.so/invite/44a7d497-16b9-4743-9fec-60ee40acb87d","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"ср","time":"16:00","duration":60}]}},{"id":"mul2in7zrgo4","name":"Валера 8","subject":"Математика 8 класс","color":"#F0E0A8","topics":[{"id":"mumdy9cabzzc","text":"Диагностическое занятие, формулы сокращенного умножения, задачи с треугольниками, вероятность и статистика","done":true,"planDate":"2026-09-29","doneDate":"2026-09-29"},{"id":"mup8tayz6c2r","text":"Формула разности квадратов. Переведение обыкновенных дробей в десятичные.","done":true,"planDate":"2026-10-01","doneDate":"2026-10-01"}],"attendance":[{"id":"mumdyc1ac6qb","date":"2026-09-29","present":true,"note":""},{"id":"mumdyfi6ihrq","date":"2026-10-01","present":true,"planned":true,"note":""},{"id":"munquxv7x1jf","date":"2026-10-06","present":false,"planned":true,"note":""},{"id":"munqv0z3tbsw","date":"2026-10-08","present":false,"planned":true,"note":""}],"homework":[{"id":"mup8tw5fkr8b","text":"дз1 (разложение на множители)","due":"2026-10-01","status":"done","images":[]},{"id":"mup8u9d7k3il","text":"дз2 (формула разности квадратов)","due":"2026-10-06","status":"pending","images":[]}],"boardUrl":"https://app.holst.so/board/530ae0a6-0fec-4e0b-9f3f-08abe8aa4fdd","links":[],"hourlyRate":1500,"payments":[],"mistakes":[],"results":[],"schedule":{"slots":[{"day":"вт","time":"14:00","duration":60},{"day":"чт","time":"14:00","duration":60}]}}],"activeId":"mt9ryxs81ac4","templates":[],"view":"dashboard","breaks":[{"id":"brk_пн1300","day":"пн","time":"13:00","duration":60,"label":"Перерыв"},{"id":"brk_пн1400","day":"пн","time":"14:00","duration":60,"label":"Перерыв"},{"id":"brk_вт1300","day":"вт","time":"13:00","duration":60,"label":"Перерыв"},{"id":"brk_ср1200","day":"ср","time":"12:00","duration":60,"label":"Перерыв"},{"id":"brk_ср1500","day":"ср","time":"15:00","duration":60,"label":"Перерыв"},{"id":"brk_чт1300","day":"чт","time":"13:00","duration":60,"label":"Перерыв"},{"id":"brk_чт1500","day":"чт","time":"15:00","duration":60,"label":"Перерыв"}]};
+    state.students = seedData.students;
+    state.activeId = seedData.activeId;
+    state.templates = seedData.templates || [];
+    state.breaks = seedData.breaks || [];
+    state.view = seedData.view || 'dashboard';
+    save();
+  }
+
+  renderSidebar();
+  if (state.view === 'student' && state.activeId) {
+    renderMain();
+  } else if (state.view === 'schedule') {
+    setNavActive('navSchedule');
+    renderScheduleView();
+  } else {
+    setNavActive('navHome');
+    showDashboard();
+  }
+  loadFromCloud();
 }
 
-renderSidebar();
-if (state.view === 'student' && state.activeId) {
-  renderMain();
-} else if (state.view === 'schedule') {
-  setNavActive('navSchedule');
-  renderScheduleView();
-} else {
-  setNavActive('navHome');
-  showDashboard();
-}
+// Auto-init if session already active (boot() set _autoInit)
+if (window._autoInit) initApp();
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 function renderSidebar() {
@@ -3699,7 +2050,6 @@ function renderScheduleView() {
   const START_H = 8, END_H = 20, STEP = 10;
   const DAYS = ['пн','вт','ср','чт','пт','сб','вс'];
   const CELL_H = 22; // px per 10-min slot
-  const LESSON_DUR = 60; // assume 60-min lesson for display height
 
   // Today's day index (0=пн … 6=вс), js getDay: 0=sun,1=mon…
   const jsDay = new Date().getDay();
@@ -3713,14 +2063,14 @@ function renderScheduleView() {
     }
   }
 
-  // Build lookup: dayIndex → [{student, time}]
+  // Build lookup: dayIndex → [{student, time, duration}]
   const lessonsByDay = Array.from({length: 7}, () => []);
   state.students.forEach(s => {
     const slots = normalizeSchedule(s.schedule || {});
     slots.forEach(sl => {
       const di = DAYS.indexOf(sl.day);
       if (di === -1 || !sl.time) return;
-      lessonsByDay[di].push({ student: s, time: sl.time });
+      lessonsByDay[di].push({ student: s, time: sl.time, duration: sl.duration || 60 });
     });
   });
 
@@ -3741,9 +2091,9 @@ function renderScheduleView() {
       const isToday = di === todayIdx;
       rowsHtml += `<div class="sg-cell ${isHour ? 'hour-mark' : ''} ${isToday ? 'today-col' : ''}" data-day="${di}" data-row="${rowIdx}">`;
       // Place lessons that START at this slot
-      lessonsByDay[di].forEach(({ student: s, time }) => {
+      lessonsByDay[di].forEach(({ student: s, time, duration }) => {
         if (timeToRow(time) === rowIdx) {
-          const heightPx = (LESSON_DUR / STEP) * CELL_H - 2;
+          const heightPx = (duration / STEP) * CELL_H - 2;
           const prepKey = prepKey_(s.id, di, time);
           const isPrepped = getPrepState(prepKey);
           rowsHtml += `
@@ -3752,8 +2102,16 @@ function renderScheduleView() {
                 title="${isPrepped ? 'Материал готов' : 'Отметить как подготовлено'}"
                 onclick="togglePrep('${prepKey}',this)"></div>
               <div class="sg-lesson-name" onclick="selectStudent('${s.id}')">${esc(s.name)}</div>
-              <div class="sg-lesson-time">${esc(time)}</div>
+              <div class="sg-lesson-time">${esc(time)} · ${duration} мин</div>
             </div>`;
+        }
+      });
+      (state.breaks || []).forEach(br => {
+        if (br.day === day && br.time && timeToRow(br.time) === rowIdx) {
+          const hPx = ((br.duration || 60) / STEP) * CELL_H - 2;
+          rowsHtml += `<div class="sg-break" style="height:${hPx}px" title="${esc(br.label || 'Перерыв')} ${esc(br.time)} (${br.duration || 60} мин)">
+            <span>${esc(br.label || 'Перерыв')} · ${esc(br.time)}</span>
+            <button class="sg-break-del" title="Удалить перерыв" onclick="deleteBreak('${br.id}')">×</button></div>`;
         }
       });
       rowsHtml += `</div>`;
@@ -3792,7 +2150,68 @@ function renderScheduleView() {
           ${rowsHtml}
         </div>
       </div>
+      <div class="breaks-panel" id="breaksPanel" style="margin-top:20px"></div>
     </div>`;
+  renderBreaksPanel();
+}
+
+// ─── BREAKS ───────────────────────────────────────────────────────────────────
+let _brkDays = [];
+function renderBreaksPanel() {
+  const el = document.getElementById('breaksPanel');
+  if (!el) return;
+  const D = ['пн','вт','ср','чт','пт','сб','вс'];
+  const list = (state.breaks || []).slice().sort((a, b) =>
+    D.indexOf(a.day) - D.indexOf(b.day) || String(a.time).localeCompare(String(b.time)));
+  el.innerHTML = `
+    <h3>🩶 Перерывы</h3>
+    ${list.length ? list.map(b => `
+      <div class="break-item">
+        <b style="min-width:28px">${esc(b.day)}</b><span style="min-width:48px">${esc(b.time)}</span>
+        <span style="min-width:60px;color:var(--muted)">${b.duration || 60} мин</span>
+        <span style="flex:1;color:var(--muted)">${esc(b.label || '')}</span>
+        <button class="btn-icon" title="Удалить" onclick="deleteBreak('${b.id}')">🗑</button>
+      </div>`).join('') : '<div style="color:var(--muted);font-size:13px">Перерывов пока нет</div>'}
+    <div class="brk-form">
+      <div class="brk-row"><div><label>Дни (можно несколько)</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${D.map(d => `<button type="button" class="brk-day-chip ${_brkDays.includes(d) ? 'on' : ''}" data-d="${d}" onclick="toggleBreakDay('${d}')">${d}</button>`).join('')}
+        </div></div></div>
+      <div class="brk-row">
+        <div><label>Начало</label><input type="time" id="brkTime" value="13:00" step="600"></div>
+        <div><label>Длительность</label><select id="brkDur">
+          <option value="15">15 мин</option><option value="30">30 мин</option><option value="45">45 мин</option>
+          <option value="60" selected>60 мин</option><option value="90">90 мин</option></select></div>
+        <div><label>Подпись</label><input id="brkLabel" placeholder="Перерыв" style="width:130px"></div>
+        <button class="btn-primary" onclick="addBreaks()">Добавить</button>
+      </div>
+      <div id="brkErr" style="color:#c0392b;font-size:12px"></div>
+    </div>`;
+}
+function toggleBreakDay(d) {
+  const i = _brkDays.indexOf(d);
+  if (i >= 0) _brkDays.splice(i, 1); else _brkDays.push(d);
+  document.querySelectorAll('.brk-day-chip').forEach(c => c.classList.toggle('on', _brkDays.includes(c.dataset.d)));
+}
+function addBreaks() {
+  const err = document.getElementById('brkErr');
+  const time = document.getElementById('brkTime').value;
+  const dur = parseInt(document.getElementById('brkDur').value) || 60;
+  const label = document.getElementById('brkLabel').value.trim() || 'Перерыв';
+  if (!_brkDays.length) { err.textContent = 'Выберите хотя бы один день'; return; }
+  if (!time) { err.textContent = 'Укажите время начала'; return; }
+  const [hh, mm] = time.split(':').map(Number);
+  if (hh < 8 || hh >= 20) { err.textContent = 'Сетка расписания показывает время с 08:00 до 20:00'; return; }
+  if (!state.breaks) state.breaks = [];
+  _brkDays.forEach(day => state.breaks.push({ id: 'brk_' + uid(), day, time, duration: dur, label }));
+  _brkDays = [];
+  save();
+  renderScheduleView();
+}
+function deleteBreak(id) {
+  state.breaks = (state.breaks || []).filter(b => b.id !== id);
+  save();
+  renderScheduleView();
 }
 
 // Darken a pastel hex color for text-on-color readability
@@ -3992,7 +2411,7 @@ function renderMain() {
         <span class="subject-badge">${esc(s.subject)}</span>
       </div>
       <div class="student-header-actions">
-        <button class="btn-export" onclick="exportStudentReport('${s.id}')">📄 Отчёт</button>
+        <button class="btn-export" onclick="openReportModal('${s.id}')">📄 Отчёт</button>
         <button class="btn-edit-student" onclick="openEditStudentModal()">✏ Редактировать</button>
         <button class="btn-delete-student" onclick="deleteStudent()">✕</button>
       </div>
@@ -4034,6 +2453,7 @@ function renderMain() {
       <button class="tab-btn ${activeTab==='topics'?'active':''}" data-tab="topics" onclick="switchTab('topics')">📚 Темы</button>
       <button class="tab-btn ${activeTab==='attendance'?'active':''}" data-tab="attendance" onclick="switchTab('attendance')">📅 Посещаемость</button>
       <button class="tab-btn ${activeTab==='homework'?'active':''}" data-tab="homework" onclick="switchTab('homework')">✏️ Домашние задания</button>
+      <button class="tab-btn ${activeTab==='results'?'active':''}" data-tab="results" onclick="switchTab('results')">🏆 Результаты</button>
       <button class="tab-btn ${activeTab==='finance'?'active':''}" data-tab="finance" onclick="switchTab('finance')">💰 Оплата</button>
       <button class="tab-btn ${activeTab==='mistakes'?'active':''}" data-tab="mistakes" onclick="switchTab('mistakes')">🧩 Типовые ошибки</button>
       <button class="tab-btn ${activeTab==='links'?'active':''}" data-tab="links" onclick="switchTab('links')">🔗 Ссылки</button>
@@ -4047,6 +2467,9 @@ function renderMain() {
     </div>
     <div id="tab-homework" class="tab-panel ${activeTab==='homework'?'active':''}">
       ${renderHomeworkPanel(s)}
+    </div>
+    <div id="tab-results" class="tab-panel ${activeTab==='results'?'active':''}">
+      ${renderResultsPanel(s)}
     </div>
     <div id="tab-finance" class="tab-panel ${activeTab==='finance'?'active':''}">
       ${renderFinancePanel(s)}
@@ -4639,20 +3062,23 @@ function renderFinancePanel(s) {
   const payments = s.payments || [];
   const sorted = [...payments].sort((a, b) => b.date.localeCompare(a.date));
 
-  const totalPaid = payments.filter(p => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
-  const totalUnpaid = payments.filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
-  const countUnpaid = payments.filter(p => !p.paid).length;
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-  const rows = sorted.map(p => `
-    <div class="fin-row">
-      <button class="${p.paid ? 'fin-paid-badge' : 'fin-unpaid-badge'}" onclick="togglePayment('${p.id}')">
-        ${p.paid ? 'Оплачено' : 'Не оплачено'}
-      </button>
-      <span class="fin-date">${formatDate(p.date)}</span>
-      <span class="fin-amount" style="color:${p.paid ? 'var(--green)' : 'var(--red)'}">${Number(p.amount).toLocaleString('ru-RU')} ₽</span>
-      <button class="btn-remove-item" onclick="removePayment('${p.id}')">×</button>
-    </div>
-  `).join('');
+  const totalPaid    = payments.filter(p => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const totalUnpaid  = payments.filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const countUnpaid  = payments.filter(p => !p.paid).length;
+  const monthPaid    = payments
+    .filter(p => p.paid && p.date && p.date.startsWith(thisMonth))
+    .reduce((a, p) => a + (Number(p.amount) || 0), 0);
+
+  const cells = sorted.map(p => `
+    <div class="fin-cell ${p.paid ? 'paid' : 'unpaid'}" onclick="togglePayment('${p.id}')">
+      <button class="fin-cell-remove" onclick="event.stopPropagation();removePayment('${p.id}')" title="Удалить">×</button>
+      <div class="fin-cell-date">${formatDate(p.date)}</div>
+      <div class="fin-cell-amount">${Number(p.amount).toLocaleString('ru-RU')} ₽</div>
+      <div class="fin-cell-status">${p.paid ? '✓ Оплачено' : '✗ Не оплачено'}</div>
+    </div>`).join('');
 
   return `
     <div class="fin-summary-row">
@@ -4675,6 +3101,11 @@ function renderFinancePanel(s) {
         </div>
       </div>
       <div class="stat-card">
+        <div class="stat-label">Оплачено в этом месяце</div>
+        <div class="stat-value" style="color:var(--indigo);font-size:20px">${monthPaid.toLocaleString('ru-RU')} ₽</div>
+        <div class="stat-sub">${now.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})}</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-label">Оплачено всего</div>
         <div class="stat-value" style="color:var(--green);font-size:20px">${totalPaid.toLocaleString('ru-RU')} ₽</div>
       </div>
@@ -4687,8 +3118,8 @@ function renderFinancePanel(s) {
 
     <div class="section-card">
       <div class="section-head"><h2>История оплат</h2></div>
-      <div class="topics-list">
-        ${rows || '<div class="empty-state"><div class="icon">💰</div><p>Записей об оплате пока нет</p></div>'}
+      <div class="fin-grid">
+        ${cells || '<div class="empty-state" style="grid-column:1/-1"><div class="icon">💰</div><p>Записей об оплате пока нет</p></div>'}
       </div>
       <div class="fin-add-row">
         <input type="date" id="newFinDate" class="fin-date-input" value="${todayStr()}">
@@ -4757,17 +3188,23 @@ function renderSlotRow(sl, i) {
     `<button type="button" class="day-btn ${sl.day === d ? 'selected' : ''}"
       onclick="selectSlotDay(this, ${i}, '${d}')">${d}</button>`
   ).join('');
+  const dur = sl.duration || 60;
+  const durOptions = [30,45,60,90,120].map(v =>
+    `<option value="${v}" ${dur === v ? 'selected' : ''}>${v} мин</option>`
+  ).join('');
   return `
     <div class="schedule-slot-row" id="slotRow-${i}" data-index="${i}">
       <div class="schedule-days">${dayBtns}</div>
       <input class="slot-time-input" type="time" value="${esc(sl.time || '')}"
         data-slot="${i}" placeholder="Время">
+      <select class="slot-duration-select" data-dur="${i}" title="Длительность занятия">
+        ${durOptions}
+      </select>
       <button class="slot-remove-btn" onclick="removeSlotRow(${i})" title="Удалить">×</button>
     </div>`;
 }
 
 function selectSlotDay(btn, rowIndex, day) {
-  // Deselect all day-btns in this row, select clicked one
   const row = document.getElementById('slotRow-' + rowIndex);
   if (!row) return;
   row.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
@@ -4779,14 +3216,13 @@ function addSlotRow() {
   if (!container) return;
   const i = container.querySelectorAll('.schedule-slot-row').length;
   const div = document.createElement('div');
-  div.innerHTML = renderSlotRow({ day: '', time: '' }, i);
+  div.innerHTML = renderSlotRow({ day: '', time: '', duration: 60 }, i);
   container.appendChild(div.firstElementChild);
 }
 
 function removeSlotRow(i) {
   const row = document.getElementById('slotRow-' + i);
   if (row) row.remove();
-  // Re-index remaining rows so IDs stay unique
   const container = document.getElementById('slotRows');
   if (!container) return;
   container.querySelectorAll('.schedule-slot-row').forEach((row, newIdx) => {
@@ -4797,6 +3233,8 @@ function removeSlotRow(i) {
     });
     const timeInp = row.querySelector('.slot-time-input');
     if (timeInp) timeInp.dataset.slot = newIdx;
+    const durSel = row.querySelector('.slot-duration-select');
+    if (durSel) durSel.dataset.dur = newIdx;
     const removeBtn = row.querySelector('.slot-remove-btn');
     if (removeBtn) removeBtn.setAttribute('onclick', `removeSlotRow(${newIdx})`);
   });
@@ -4809,9 +3247,11 @@ function collectSlots() {
   container.querySelectorAll('.schedule-slot-row').forEach(row => {
     const selectedDay = row.querySelector('.day-btn.selected');
     const timeInp = row.querySelector('.slot-time-input');
+    const durSel = row.querySelector('.slot-duration-select');
     const day = selectedDay ? selectedDay.textContent.trim() : '';
     const time = timeInp ? timeInp.value : '';
-    if (day) slots.push({ day, time });
+    const duration = durSel ? parseInt(durSel.value) : 60;
+    if (day) slots.push({ day, time, duration });
   });
   return slots;
 }
@@ -4906,6 +3346,177 @@ function removeMistake(id) {
   const s = getActive();
   s.mistakes = (s.mistakes || []).filter(x => x.id !== id);
   save(); renderMain();
+}
+
+// ─── RESULTS ──────────────────────────────────────────────────────────────────
+function scoreClass(score, maxScore) {
+  if (!score && score !== 0) return 'score-none';
+  const pct = maxScore ? score / maxScore : null;
+  if (pct === null) return 'score-none';
+  if (pct >= 0.8) return 'score-high';
+  if (pct >= 0.5) return 'score-mid';
+  return 'score-low';
+}
+
+function renderResultsPanel(s) {
+  const results = [...(s.results || [])].sort((a, b) => b.date.localeCompare(a.date));
+
+  const cards = results.map(r => {
+    const cls = scoreClass(r.score, r.maxScore);
+    const scoreLine = (r.score !== '' && r.score !== null && r.score !== undefined)
+      ? `${r.score}${r.maxScore ? ' / ' + r.maxScore : ''}`
+      : '—';
+    const thumbs = (r.images || []).map((src, i) => `
+      <div class="result-thumb-wrap">
+        <img class="result-thumb" src="${src}" alt="фото ${i+1}" onclick="openResultImage('${r.id}',${i})">
+        <button class="result-thumb-del" onclick="removeResultImage('${r.id}',${i})">×</button>
+      </div>`).join('');
+    return `
+      <div class="result-card">
+        <div class="result-card-header">
+          <div class="result-score-badge ${cls}">
+            ${scoreLine === '—' ? '<span style="font-size:18px">—</span>' :
+              `<div>${r.score}</div>${r.maxScore ? `<div class="score-max">из ${r.maxScore}</div>` : ''}`}
+          </div>
+          <div class="result-body">
+            <div class="result-title">${esc(r.title)}</div>
+            <div class="result-meta">${formatDate(r.date)}${r.type ? ' · ' + esc(r.type) : ''}</div>
+          </div>
+          <button class="btn-attach" onclick="triggerResultImageUpload('${r.id}')" title="Прикрепить фото">📎</button>
+          <button class="btn-remove-item" onclick="removeResult('${r.id}')">×</button>
+        </div>
+        ${r.comment ? `<div class="result-comment">${esc(r.comment)}</div>` : ''}
+        ${thumbs ? `<div class="result-images">${thumbs}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="section-card">
+      <div class="section-head"><h2>Результаты тестов и пробников</h2><button class="btn-export" onclick="openReportModal('${s.id}','results')">📄 Отчёт по результатам</button></div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${cards || '<div class="empty-state"><div class="icon">🏆</div><p>Результатов пока нет — добавьте первый тест</p></div>'}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head"><h2>Добавить результат</h2></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="newResultTitle" placeholder="Название теста / пробника"
+            style="flex:1;min-width:180px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+          <input type="text" id="newResultType" placeholder="Тип (пробник, ВПР, …)"
+            style="width:160px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 14px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="date" id="newResultDate" value="${todayStr()}"
+            style="border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;
+              font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)">
+          <input type="number" id="newResultScore" placeholder="Балл" min="0"
+            style="width:90px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 12px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+          <span style="color:var(--muted);font-size:14px">из</span>
+          <input type="number" id="newResultMax" placeholder="Макс." min="0"
+            style="width:90px;border:1.5px solid var(--border);border-radius:8px;
+              padding:9px 12px;font-size:14px;font-family:Inter,sans-serif;outline:none;
+              background:var(--bg);color:var(--text)"
+            onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <input type="text" id="newResultComment" placeholder="Комментарий (что было сложно, динамика…)"
+          style="border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;
+            font-size:14px;font-family:Inter,sans-serif;outline:none;
+            background:var(--bg);color:var(--text)"
+          onfocus="this.style.borderColor='var(--indigo)'" onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')addResult()">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn-add" onclick="addResult()">+ Добавить</button>
+          <button class="btn-attach" onclick="document.getElementById('newResultImgInput').click()">📎 Прикрепить фото</button>
+          <input type="file" id="newResultImgInput" accept="image/*" multiple style="display:none"
+            onchange="handleNewResultImages(this.files)">
+          <span id="newResultImgCount" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="resultAttachFile" accept="image/*" multiple style="display:none"
+      onchange="handleResultAttachFiles(this.files)">`;
+}
+
+let _pendingResultImages = [];
+let _attachingResultId = null;
+
+function addResult() {
+  const title = document.getElementById('newResultTitle')?.value.trim();
+  if (!title) { document.getElementById('newResultTitle')?.focus(); return; }
+  const type    = document.getElementById('newResultType')?.value.trim() || '';
+  const date    = document.getElementById('newResultDate')?.value || todayStr();
+  const scoreRaw = document.getElementById('newResultScore')?.value;
+  const maxRaw   = document.getElementById('newResultMax')?.value;
+  const comment  = document.getElementById('newResultComment')?.value.trim() || '';
+  const score    = scoreRaw !== '' && scoreRaw !== undefined ? Number(scoreRaw) : null;
+  const maxScore = maxRaw  !== '' && maxRaw  !== undefined ? Number(maxRaw)  : null;
+  const s = getActive();
+  if (!s.results) s.results = [];
+  s.results.push({ id: uid(), title, type, date, score, maxScore, comment, images: [..._pendingResultImages] });
+  _pendingResultImages = [];
+  save(); renderMain();
+  setTimeout(() => { const el = document.getElementById('newResultTitle'); if (el) el.focus(); }, 50);
+}
+
+function removeResult(id) {
+  const s = getActive();
+  s.results = (s.results || []).filter(x => x.id !== id);
+  save(); renderMain();
+}
+
+function triggerResultImageUpload(resultId) {
+  _attachingResultId = resultId;
+  const inp = document.getElementById('resultAttachFile');
+  if (inp) { inp.value = ''; inp.click(); }
+}
+
+function handleResultAttachFiles(files) {
+  if (!files || !files.length) return;
+  const s = getActive();
+  const r = (s.results || []).find(x => x.id === _attachingResultId);
+  if (!r) return;
+  if (!r.images) r.images = [];
+  readFilesAsBase64(Array.from(files), results => {
+    r.images.push(...results);
+    save(); renderMain();
+  });
+}
+
+function handleNewResultImages(files) {
+  if (!files || !files.length) return;
+  readFilesAsBase64(Array.from(files), results => {
+    _pendingResultImages.push(...results);
+    const cnt = document.getElementById('newResultImgCount');
+    if (cnt) cnt.textContent = _pendingResultImages.length + ' фото прикреплено';
+  });
+}
+
+function removeResultImage(resultId, idx) {
+  const s = getActive();
+  const r = (s.results || []).find(x => x.id === resultId);
+  if (!r || !r.images) return;
+  r.images.splice(idx, 1);
+  save(); renderMain();
+}
+
+function openResultImage(resultId, idx) {
+  const s = getActive();
+  const r = (s.results || []).find(x => x.id === resultId);
+  if (!r || !r.images || !r.images[idx]) return;
+  document.getElementById('lightboxImg').src = r.images[idx];
+  document.getElementById('lightbox').classList.remove('hidden');
 }
 
 // ─── LINKS ────────────────────────────────────────────────────────────────────
@@ -5089,7 +3700,7 @@ function saveStudent() {
     const s = {
       id: uid(), name, subject, color: selectedColor,
       topics: [], attendance: [], homework: [], boardUrl: '', links: [],
-      hourlyRate: 1500, payments: [], mistakes: [], schedule: { slots: [] }
+      hourlyRate: 1500, payments: [], mistakes: [], results: [], schedule: { slots: [] }
     };
     state.students.push(s);
     state.activeId = s.id;
@@ -5134,20 +3745,27 @@ function confirmDeleteStudent() {
 }
 
 // ─── PARENT REPORT EXPORT ─────────────────────────────────────────────────────
-function exportStudentReport(studentId) {
+function exportStudentReport(studentId, dateFrom, dateTo) {
   const s = state.students.find(x => x.id === studentId);
   if (!s) return;
 
   const today = todayStr();
-  const topicsDone = s.topics.filter(t => t.done).length;
-  const topicsTotal = s.topics.length;
-  const pastAtt = s.attendance.filter(a => a.date <= today);
+  const from = dateFrom || '0000-00-00';
+  const to   = dateTo   || '9999-99-99';
+  const inRange = d => !d || (d >= from && d <= to);
+  const periodLabel = reportPeriodLabel(dateFrom, dateTo);
+  const topicsF = s.topics.filter(t => inRange(t.done ? (t.doneDate || t.planDate) : t.planDate));
+  const topicsDone = topicsF.filter(t => t.done).length;
+  const topicsTotal = topicsF.length;
+  const pastAtt = s.attendance.filter(a => a.date <= today && a.date >= from && a.date <= to);
   const attPresent = pastAtt.filter(a => a.present).length;
-  const hwDone = s.homework.filter(h => h.status === 'done').length;
-  const hwTotal = s.homework.length;
-  const unpaidSum = (s.payments || []).filter(p => !p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const hwF = s.homework.filter(h => inRange(h.due));
+  const hwDone = hwF.filter(h => h.status === 'done').length;
+  const hwTotal = hwF.length;
+  const mistakesF = (s.mistakes || []).filter(m => inRange(m.date));
+  const unpaidSum = (s.payments || []).filter(p => !p.paid && inRange(p.date)).reduce((a, p) => a + (Number(p.amount) || 0), 0);
 
-  const topicsListHtml = s.topics.map(t => `
+  const topicsListHtml = topicsF.map(t => `
     <tr>
       <td style="padding:8px 10px;border-bottom:1px solid #eee">${esc(t.text)}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">${t.done ? '✅ Пройдено' : '⏳ В планах'}</td>
@@ -5161,14 +3779,14 @@ function exportStudentReport(studentId) {
       <td style="padding:8px 10px;border-bottom:1px solid #eee;color:#888">${a.note ? esc(a.note) : '—'}</td>
     </tr>`).join('');
 
-  const hwListHtml = s.homework.map(h => `
+  const hwListHtml = hwF.map(h => `
     <tr>
       <td style="padding:8px 10px;border-bottom:1px solid #eee">${esc(h.text)}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">${h.status === 'done' ? '✅ Выполнено' : (h.due && h.due < today ? '⚠️ Просрочено' : '⏳ Не сдано')}</td>
       <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;color:#888">${h.due ? formatDate(h.due) : '—'}</td>
     </tr>`).join('');
 
-  const mistakesHtml = (s.mistakes || []).map(m => `<li style="margin-bottom:6px">${esc(m.text)} <span style="color:#999;font-size:12px">(${formatDate(m.date)})</span></li>`).join('');
+  const mistakesHtml = mistakesF.map(m => `<li style="margin-bottom:6px">${esc(m.text)} <span style="color:#999;font-size:12px">(${formatDate(m.date)})</span></li>`).join('');
 
   const reportHtml = `<!DOCTYPE html>
 <html lang="ru"><head><meta charset="UTF-8"><title>Отчёт — ${esc(s.name)}</title>
@@ -5189,7 +3807,7 @@ function exportStudentReport(studentId) {
 </style></head>
 <body>
   <h1>Отчёт об успеваемости — ${esc(s.name)}</h1>
-  <div class="sub">${esc(s.subject)} · сформировано ${formatDate(today)}</div>
+  <div class="sub">${esc(s.subject)} · ${periodLabel} · сформировано ${formatDate(today)}</div>
 
   <div class="stats">
     <div class="stat"><div class="label">Темы пройдены</div><div class="value">${topicsDone}/${topicsTotal}</div></div>
@@ -5207,7 +3825,7 @@ function exportStudentReport(studentId) {
   <h2>Домашние задания</h2>
   <table><tr><th>Задание</th><th>Статус</th><th>Срок</th></tr>${hwListHtml || '<tr><td colspan="3" style="color:#999;padding:8px 10px">Заданий пока нет</td></tr>'}</table>
 
-  ${(s.mistakes || []).length ? `<h2>На что обратить внимание</h2><ul>${mistakesHtml}</ul>` : ''}
+  ${mistakesF.length ? `<h2>На что обратить внимание</h2><ul>${mistakesHtml}</ul>` : ''}
 
   <div class="footer">Отчёт сформирован автоматически в журнале репетитора</div>
 </body></html>`;
@@ -5221,6 +3839,119 @@ function exportStudentReport(studentId) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// ─── REPORT MODAL ─────────────────────────────────────────────────────────────
+function openReportModal(sid, mode) {
+  _reportStudentId = sid;
+  _reportMode = mode || 'general';
+  document.getElementById('reportModalTitle').textContent =
+    _reportMode === 'results' ? '📄 Отчёт по результатам' : '📄 Скачать отчёт';
+  document.getElementById('reportModalOverlay').classList.add('open');
+  setReportPreset('all');
+}
+function closeReportModal() {
+  document.getElementById('reportModalOverlay').classList.remove('open');
+}
+function clearPresetHighlight() {
+  document.querySelectorAll('#reportModalOverlay .preset-btn').forEach(b => b.classList.remove('active'));
+}
+function setReportPreset(preset) {
+  document.querySelectorAll('#reportModalOverlay .preset-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.preset === preset));
+  const fromInput = document.getElementById('reportDateFrom');
+  const toInput   = document.getElementById('reportDateTo');
+  if (preset === 'all') { fromInput.value = ''; toInput.value = ''; return; }
+  const months = preset === 'month' ? 1 : (preset === '3month' ? 3 : 6);
+  const d = new Date(); d.setMonth(d.getMonth() - months);
+  fromInput.value = d.toISOString().slice(0, 10);
+  toInput.value = todayStr();
+}
+function doExportReport() {
+  let from = document.getElementById('reportDateFrom').value;
+  let to   = document.getElementById('reportDateTo').value;
+  if (from && to && from > to) { const t = from; from = to; to = t; }
+  closeReportModal();
+  if (_reportMode === 'results') exportResultsReport(_reportStudentId, from, to);
+  else exportStudentReport(_reportStudentId, from, to);
+}
+function downloadReportHtml(reportHtml, filename) {
+  const blob = new Blob([reportHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function reportPeriodLabel(from, to) {
+  if (!from && !to) return 'за всё время';
+  return 'период ' + (from ? formatDate(from) : '…') + ' – ' + (to ? formatDate(to) : '…');
+}
+
+function exportResultsReport(studentId, dateFrom, dateTo) {
+  const s = state.students.find(x => x.id === studentId);
+  if (!s) return;
+  const today = todayStr();
+  const from = dateFrom || '0000-00-00', to = dateTo || '9999-99-99';
+  const list = (s.results || [])
+    .filter(r => !r.date || (r.date >= from && r.date <= to))
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const hasScore = r => r.score !== '' && r.score != null && !isNaN(Number(r.score)) && Number(r.maxScore) > 0;
+  const scored = list.filter(hasScore);
+  const pct = r => Math.round(Number(r.score) / Number(r.maxScore) * 100);
+  const color = p => p >= 85 ? '#2e7d56' : (p >= 70 ? '#1a5fa3' : (p >= 50 ? '#856404' : '#c0392b'));
+
+  let dynHtml = '';
+  if (scored.length >= 2) {
+    const f = scored[0], l = scored[scored.length - 1];
+    const diff = pct(l) - pct(f);
+    const best = scored.reduce((a, b) => pct(b) > pct(a) ? b : a);
+    const avg = Math.round(scored.reduce((a, r) => a + pct(r), 0) / scored.length);
+    dynHtml = `<div class="stats">
+      <div class="stat"><div class="label">Первый результат</div><div class="value">${pct(f)}%</div><div class="hint">${f.score}/${f.maxScore}</div></div>
+      <div class="stat"><div class="label">Последний</div><div class="value">${pct(l)}%</div><div class="hint">${l.score}/${l.maxScore}</div></div>
+      <div class="stat"><div class="label">Динамика</div><div class="value" style="color:${diff >= 0 ? '#2e7d56' : '#c0392b'}">${diff > 0 ? '+' : ''}${diff}% ${diff > 0 ? '📈' : (diff < 0 ? '📉' : '➡️')}</div></div>
+      <div class="stat"><div class="label">Лучший / средний</div><div class="value">${pct(best)}% / ${avg}%</div></div>
+    </div>`;
+  } else if (scored.length === 1) {
+    dynHtml = `<div class="stats"><div class="stat"><div class="label">Единственный результат</div><div class="value">${pct(scored[0])}%</div><div class="hint">${scored[0].score}/${scored[0].maxScore}</div></div></div>`;
+  }
+
+  const rows = list.map(r => {
+    const p = hasScore(r) ? pct(r) : null;
+    const cm = r.comment
+      ? (/^https?:\/\//.test(r.comment) ? `<a href="${esc(r.comment)}">Ссылка на результаты</a>` : esc(r.comment))
+      : '—';
+    return `<tr>
+      <td>${r.date ? formatDate(r.date) : '—'}</td>
+      <td><b>${esc(r.title)}</b>${r.type ? `<div class="muted">${esc(r.type)}</div>` : ''}${(r.images || []).length ? `<div class="muted">📎 фото: ${r.images.length}</div>` : ''}</td>
+      <td style="text-align:center">${p !== null ? `${r.score}/${r.maxScore}` : '—'}</td>
+      <td style="text-align:center;font-weight:700;color:${p !== null ? color(p) : '#999'}">${p !== null ? p + '%' : '—'}</td>
+      <td>${cm}</td></tr>`;
+  }).join('');
+
+  const reportHtml = `<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><title>Результаты — ${esc(s.name)}</title>
+<style>
+  body { font-family: -apple-system, 'Segoe UI', Arial, sans-serif; color:#3a2030; max-width:820px; margin:0 auto; padding:32px 24px; }
+  h1 { font-size:22px; margin-bottom:2px; } .sub { color:#888; font-size:13px; margin-bottom:24px; }
+  .stats { display:flex; gap:14px; margin-bottom:24px; flex-wrap:wrap; }
+  .stat { flex:1; min-width:150px; background:#FBEEF4; border-radius:10px; padding:14px 16px; }
+  .stat .label { font-size:11px; color:#A0576E; text-transform:uppercase; font-weight:600; letter-spacing:.04em; }
+  .stat .value { font-size:22px; font-weight:800; margin-top:4px; } .stat .hint { font-size:12px; color:#999; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; font-size:11px; text-transform:uppercase; color:#999; padding:6px 10px; border-bottom:2px solid #F2E3EB; }
+  td { padding:9px 10px; border-bottom:1px solid #eee; vertical-align:top; } .muted { color:#999; font-size:12px; }
+  .footer { margin-top:32px; font-size:12px; color:#aaa; text-align:center; }
+</style></head><body>
+  <h1>Результаты — ${esc(s.name)}</h1>
+  <div class="sub">${esc(s.subject)} · ${reportPeriodLabel(dateFrom, dateTo)} · сформировано ${formatDate(today)}</div>
+  ${dynHtml}
+  <table><tr><th>Дата</th><th>Работа</th><th style="text-align:center">Балл</th><th style="text-align:center">%</th><th>Комментарий</th></tr>
+  ${rows || '<tr><td colspan="5" style="color:#999">За выбранный период результатов нет</td></tr>'}</table>
+  <div class="footer">Отчёт сформирован автоматически в журнале репетитора</div>
+</body></html>`;
+  downloadReportHtml(reportHtml, `Результаты — ${s.name} — ${formatDate(today)}.html`);
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -5245,5 +3976,52 @@ document.getElementById('studentModal').addEventListener('click', function(e) {
   if (e.target === this) closeStudentModal();
 });
 </script>
-</body>
-</html>
+
+</div><!-- /#appRoot -->
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay hidden" id="changePwdModal">
+  <div class="modal" style="max-width:360px">
+    <h3>🔑 Сменить пароль</h3>
+    <div class="form-group">
+      <label>Текущий пароль</label>
+      <input type="password" id="cpwdCurrent" placeholder="Текущий пароль">
+    </div>
+    <div class="form-group">
+      <label>Новый пароль</label>
+      <input type="password" id="cpwdNew" placeholder="Не менее 4 символов">
+    </div>
+    <div class="form-group">
+      <label>Повторите новый пароль</label>
+      <input type="password" id="cpwdRepeat" placeholder="Повторите пароль">
+    </div>
+    <div id="cpwdError" style="color:var(--red);font-size:13px;font-weight:600;min-height:18px;margin-bottom:4px"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('changePwdModal').classList.add('hidden')">Отмена</button>
+      <button class="btn-primary" onclick="submitChangePassword()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Report Period Modal -->
+  <div class="report-modal-overlay" id="reportModalOverlay" onclick="if(event.target===this)closeReportModal()">
+    <div class="report-modal">
+      <h3 id="reportModalTitle">📄 Скачать отчёт</h3>
+      <div class="report-period-presets">
+        <button class="preset-btn" data-preset="month" onclick="setReportPreset('month')">Месяц</button>
+        <button class="preset-btn" data-preset="3month" onclick="setReportPreset('3month')">3 месяца</button>
+        <button class="preset-btn" data-preset="6month" onclick="setReportPreset('6month')">6 месяцев</button>
+        <button class="preset-btn active" data-preset="all" onclick="setReportPreset('all')">Всё время</button>
+      </div>
+      <div class="report-date-row">
+        <div><label>С</label><input type="date" id="reportDateFrom" oninput="clearPresetHighlight()"></div>
+        <div><label>По</label><input type="date" id="reportDateTo" oninput="clearPresetHighlight()"></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-primary" onclick="doExportReport()">Скачать</button>
+        <button class="btn-secondary" onclick="closeReportModal()">Отмена</button>
+      </div>
+    </div>
+  </div>
+</body></html>
