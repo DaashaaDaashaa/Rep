@@ -623,6 +623,17 @@
     transition: color .15s, background .15s;
   }
   .btn-remove-item:hover { color: var(--red); background: var(--red-lt); }
+  .btn-edit-item {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 4px;
+    transition: color .15s, background .15s;
+  }
+  .btn-edit-item:hover { color: var(--indigo); background: var(--indigo-lt); }
+  .topic-text-input {
+    flex: 1; min-width: 0; font-family: Inter, sans-serif; font-size: 14px; line-height: 1.4;
+    color: var(--text); background: var(--surface); border: 1.5px solid var(--indigo);
+    border-radius: 8px; padding: 7px 10px; outline: none; resize: none; overflow: hidden;
+  }
 
   /* ADD INPUT */
   .add-row {
@@ -1584,6 +1595,19 @@
   .brk-day-chip.on { background:#8b8094; color:#fff; border-color:#8b8094; }
   .btn-icon { background:none; border:none; cursor:pointer; font-size:14px; opacity:.7; }
   .btn-icon:hover { opacity:1; }
+
+  /* ── BACKUP (скромный блок внизу главной) ── */
+  .backup-box { margin-top:40px; padding-top:14px; border-top:1px dashed var(--border); }
+  .backup-box > summary { cursor:pointer; font-size:12.5px; color:var(--muted); user-select:none; list-style:none; width:fit-content; opacity:.8; }
+  .backup-box > summary::-webkit-details-marker { display:none; }
+  .backup-box > summary:hover { opacity:1; color:var(--indigo); }
+  .backup-body { margin-top:12px; display:flex; flex-direction:column; gap:10px; max-width:560px; }
+  .backup-actions { display:flex; gap:10px; flex-wrap:wrap; }
+  .backup-hint { font-size:12px; color:var(--muted); line-height:1.5; }
+  .backup-msg { font-size:13px; }
+  .backup-msg.ok { color:#2e7d56; } .backup-msg.err { color:#c0392b; }
+  .backup-confirm { background:var(--amber-lt); border:1.5px solid #f3b9d4; border-radius:10px; padding:12px 14px; font-size:13px; }
+  .backup-confirm .backup-actions { margin-top:10px; }
 </style>
 </head>
 <body>
@@ -1886,6 +1910,22 @@ function setCloudStatus(kind, msg) {
   el.title = msg || '';
 }
 
+// Экономия запросов JSONBin (на бесплатном тарифе их ограниченное число):
+//  • переходы между экранами (ученик / главная / расписание) сохраняются только на устройстве;
+//  • правки уходят в облако не чаще раза в CLOUD_DELAY мс, пачкой;
+//  • если с последней отправки данные фактически не изменились — запрос не делается;
+//  • при закрытии/сворачивании вкладки несохранённое отправляется сразу;
+//  • пометка «есть неотправленные правки» хранится на устройстве: после обрыва связи
+//    при следующем входе побеждают локальные данные, а не устаревшая копия из облака.
+const CLOUD_DELAY = 8000;
+const DIRTY_KEY = 'tutorCloudDirty';
+let _lastSyncedKey = null;
+
+function setDirty(on) { try { if (on) localStorage.setItem(DIRTY_KEY, '1'); else localStorage.removeItem(DIRTY_KEY); } catch(e) {} }
+function isDirty() { try { return localStorage.getItem(DIRTY_KEY) === '1'; } catch(e) { return false; } }
+// ключ содержимого: без «текущего экрана», чтобы переключение вкладок не считалось изменением
+function syncKey() { return JSON.stringify(state, (k, v) => (k === 'view' || k === 'activeId') ? undefined : v); }
+
 function loadFromCloud() {
   setCloudStatus('busy');
   fetch(JSONBIN_URL + '/latest', {
@@ -1895,37 +1935,54 @@ function loadFromCloud() {
   .then(data => {
     const record = (data && data.record !== undefined) ? data.record : data;
     cloudLoaded = true;
-    if (record && Array.isArray(record.students) && record.students.length > 0) {
+    const cloudHasData = record && Array.isArray(record.students) && record.students.length > 0;
+    if (cloudHasData && !isDirty()) {
       state = migrateState(record);
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+      saveLocal();
+      _lastSyncedKey = syncKey();
       renderSidebar();
       if (state.view === 'student' && state.activeId) renderMain();
       else if (state.view === 'schedule') { setNavActive('navSchedule'); renderScheduleView(); }
       else { setNavActive('navHome'); showDashboard(); }
       setCloudStatus('ok');
     } else {
-      saveToCloud();   // облако пустое — загружаем туда то, что есть на этом устройстве
+      // облако пустое, либо на этом устройстве есть ещё не отправленные правки — главнее локальные данные
+      saveToCloud();
     }
   })
   .catch(e => { console.warn('JSONBin load error:', e); setCloudStatus('err', String(e)); });
 }
 
-function save() {
+function saveLocal() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(saveToCloud, 1500);
 }
+function save() {
+  saveLocal();
+  setDirty(true);
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(saveToCloud, CLOUD_DELAY);
+}
+function flushCloud() {
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; if (isDirty()) saveToCloud(); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushCloud(); });
+window.addEventListener('pagehide', flushCloud);
 
 function saveToCloud() {
+  clearTimeout(_saveTimer); _saveTimer = null;
   if (!cloudLoaded) { setCloudStatus('err', 'Облако ещё не прочитано: изменения пока только на этом устройстве'); return; }
+  const key = syncKey();
+  if (key === _lastSyncedKey) { setDirty(false); setCloudStatus('ok'); return; }   // ничего нового — запрос не нужен
   setCloudStatus('busy');
+  const body = JSON.stringify(state);
   fetch(JSONBIN_URL, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY, 'X-Bin-Versioning': 'false' },
-    body: JSON.stringify(state)
+    body,
+    keepalive: body.length < 60000     // чтобы запрос не оборвался при закрытии вкладки
   })
   .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(() => setCloudStatus('ok'))
+  .then(() => { _lastSyncedKey = key; if (syncKey() === key) setDirty(false); setCloudStatus('ok'); })
   .catch(e => { console.warn('JSONBin save error:', e); setCloudStatus('err', String(e)); });
 }
 
@@ -1947,7 +2004,7 @@ function initApp() {
     state.templates = seedData.templates || [];
     state.breaks = seedData.breaks || [];
     state.view = seedData.view || 'dashboard';
-    save();
+    saveLocal();
   }
 
   renderSidebar();
@@ -2020,7 +2077,7 @@ function setNavActive(id) {
 function selectStudent(id) {
   state.activeId = id;
   state.view = 'student';
-  save();
+  saveLocal();
   setNavActive(null);
   renderSidebar();
   renderMain();
@@ -2028,7 +2085,7 @@ function selectStudent(id) {
 
 function showDashboard() {
   state.view = 'dashboard';
-  save();
+  saveLocal();
   setNavActive('navHome');
   renderSidebar();
   renderDashboard();
@@ -2036,7 +2093,7 @@ function showDashboard() {
 
 function showScheduleView() {
   state.view = 'schedule';
-  save();
+  saveLocal();
   setNavActive('navSchedule');
   renderSidebar();
   renderScheduleView();
@@ -2370,7 +2427,104 @@ function renderDashboard() {
         </div>
       </div>
     </div>
+
+    <details class="backup-box" id="backupBox">
+      <summary>⚙️ Резервная копия данных</summary>
+      <div class="backup-body">
+        <div class="backup-hint">Копия — это один файл со всеми учениками, темами, оплатами, результатами и перерывами. Он нужен на случай проблем с облаком или если вы очистите данные браузера.</div>
+        <div class="backup-actions">
+          <button class="btn-export" onclick="downloadBackup()">⬇ Скачать резервную копию</button>
+          <button class="btn-export" onclick="pickBackupFile()">⬆ Загрузить из файла</button>
+          <input type="file" id="backupFileInput" accept=".json,application/json,text/plain" style="display:none" onchange="onBackupFileChosen(this)">
+        </div>
+        <div class="backup-msg" id="backupMsg"></div>
+        <div id="backupConfirm"></div>
+      </div>
+    </details>
   `;
+}
+
+// ─── BACKUP / RESTORE ──────────────────────────────────────────────────────
+let _pendingBackup = null;
+
+function setBackupMsg(text, kind) {
+  const box = document.getElementById('backupBox'); if (box) box.open = true;
+  const el = document.getElementById('backupMsg');
+  if (el) { el.textContent = text || ''; el.className = 'backup-msg ' + (kind || ''); }
+}
+function backupCounts(st) {
+  const students = st.students || [];
+  return {
+    students: students.length,
+    topics: students.reduce((a, s) => a + (s.topics || []).length, 0),
+    results: students.reduce((a, s) => a + (s.results || []).length, 0),
+    breaks: (st.breaks || []).length
+  };
+}
+function downloadBackup() {
+  const name = 'Журнал-резервная-копия-' + todayStr() + '.json';
+  const blob = new Blob([JSON.stringify(state)], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  setBackupMsg('✓ Файл сохранён: ' + name + ' (учеников: ' + state.students.length + ')', 'ok');
+}
+function pickBackupFile() {
+  const inp = document.getElementById('backupFileInput');
+  if (inp) inp.click();
+}
+function onBackupFileChosen(inp) {
+  const file = inp.files && inp.files[0];
+  inp.value = '';
+  document.getElementById('backupConfirm').innerHTML = '';
+  _pendingBackup = null;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onerror = () => setBackupMsg('Не удалось прочитать файл', 'err');
+  reader.onload = () => {
+    let obj;
+    try { obj = JSON.parse(String(reader.result).replace(/^\uFEFF/, '')); }
+    catch (e) { setBackupMsg('Файл не похож на резервную копию журнала: это не JSON', 'err'); return; }
+    if (obj && obj.record && Array.isArray(obj.record.students)) obj = obj.record;   // выгрузка из JSONBin
+    const ok = obj && Array.isArray(obj.students) &&
+      obj.students.every(s => s && typeof s.id === 'string' && typeof s.name === 'string');
+    if (!ok) { setBackupMsg('Файл не похож на резервную копию журнала: нет списка учеников', 'err'); return; }
+    if (!obj.students.length) { setBackupMsg('В файле нет ни одного ученика, загружать нечего', 'err'); return; }
+    _pendingBackup = obj;
+    const c = backupCounts(obj), cur = backupCounts(state);
+    setBackupMsg('', '');
+    document.getElementById('backupConfirm').innerHTML = `
+      <div class="backup-confirm">
+        <b>${esc(file.name)}</b><br>
+        В файле: учеников — ${c.students}, тем — ${c.topics}, результатов — ${c.results}, перерывов — ${c.breaks}.<br>
+        Сейчас в журнале: учеников — ${cur.students}, тем — ${cur.topics}.<br>
+        <b>Текущие данные будут заменены данными из файла.</b> Если не уверены, сначала скачайте копию текущих данных.
+        <div class="backup-actions">
+          <button class="btn-primary" onclick="confirmRestoreBackup()">Заменить данные</button>
+          <button class="btn-secondary" onclick="cancelRestoreBackup()">Отмена</button>
+        </div>
+      </div>`;
+    const box = document.getElementById('backupBox'); if (box) box.open = true;
+  };
+  reader.readAsText(file);
+}
+function cancelRestoreBackup() {
+  _pendingBackup = null;
+  document.getElementById('backupConfirm').innerHTML = '';
+  setBackupMsg('Загрузка отменена, данные не изменены', '');
+}
+function confirmRestoreBackup() {
+  if (!_pendingBackup) return;
+  const incoming = migrateState(JSON.parse(JSON.stringify(_pendingBackup)));
+  _pendingBackup = null;
+  state = incoming;
+  if (!state.students.some(s => s.id === state.activeId)) state.activeId = null;
+  state.view = 'dashboard';
+  save();                       // на устройство сразу, в облако — через пару секунд
+  showDashboard();
+  setBackupMsg('✓ Данные загружены из файла (учеников: ' + state.students.length + ')', 'ok');
 }
 
 function formatRelativeDay(iso) {
@@ -2524,13 +2678,14 @@ function renderTopicsPanel(s) {
     }
 
     return `
-      <div class="topic-row ${t.done?'done':''}" onclick="toggleTopic('${t.id}')">
+      <div class="topic-row ${t.done?'done':''}" id="trow-${t.id}" onclick="toggleTopic('${t.id}')">
         <div class="topic-check"></div>
-        <span class="topic-text">${esc(t.text)}</span>
+        <span class="topic-text" id="ttxt-${t.id}">${esc(t.text)}</span>
         <div class="topic-date-wrap" id="tdw-${t.id}">
           ${planPill}
           ${donePill}
         </div>
+        <button class="btn-edit-item" title="Изменить текст темы" onclick="event.stopPropagation();editTopicText('${t.id}')">✎</button>
         <button class="btn-remove-item" onclick="event.stopPropagation();removeTopic('${t.id}')">×</button>
       </div>`;
   }).join('');
@@ -2584,9 +2739,12 @@ function toggleTopic(id) {
   const s = getActive();
   const t = s.topics.find(x => x.id === id);
   t.done = !t.done;
-  if (t.done && !t.doneDate) {
-    t.doneDate = todayStr();
-  } else if (!t.done) {
+  if (t.done) {
+    // повторная отметка возвращает прежнюю дату (если снимали случайно); у новой темы — сегодня
+    if (!t.doneDate) t.doneDate = t.prevDoneDate || todayStr();
+    delete t.prevDoneDate;
+  } else {
+    if (t.doneDate) t.prevDoneDate = t.doneDate;   // запоминаем, но в отчётах и на экране тема без даты
     t.doneDate = '';
   }
   save(); renderSidebar(); renderMain();
@@ -2608,6 +2766,50 @@ function addTopic() {
   // keep date for convenience, user can clear manually
   save(); renderSidebar(); renderMain();
   setTimeout(() => { const el = document.getElementById('newTopicInput'); if (el) el.focus(); }, 50);
+}
+
+// Inline text editor: меняет только формулировку темы; отметка «пройдено» и даты не затрагиваются.
+// Enter / клик в другом месте — сохранить, Shift+Enter — новая строка, Esc — отмена.
+function editTopicText(topicId) {
+  const span = document.getElementById('ttxt-' + topicId);
+  if (!span || span.tagName === 'TEXTAREA') return;
+  const s = getActive();
+  const t = s.topics.find(x => x.id === topicId);
+  if (!t) return;
+
+  const ta = document.createElement('textarea');
+  ta.className = 'topic-text-input';
+  ta.id = 'ttxt-' + topicId;
+  ta.rows = 1;
+  ta.value = t.text;
+  const fit = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+
+  let finished = false;
+  const commit = () => {
+    if (finished) return;
+    finished = true;
+    const val = ta.value.replace(/\s+/g, ' ').trim();
+    if (val && val !== t.text) { t.text = val; save(); renderSidebar(); }
+    renderMain();                    // пустой текст — просто возвращаем прежний
+  };
+  const cancel = () => {
+    if (finished) return;
+    finished = true;
+    renderMain();
+  };
+
+  ta.addEventListener('click', e => e.stopPropagation());   // не переключать «пройдено»
+  ta.addEventListener('input', fit);
+  ta.addEventListener('blur', commit);
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ta.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+  });
+
+  span.replaceWith(ta);
+  fit();
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
 }
 
 // Inline date editor: replaces the pill with a date input, saves on change/blur
