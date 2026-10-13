@@ -10,6 +10,7 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
+    --hdr-h: 62px;
     --bg:        #FDF5F8;
     --surface:   #FFFFFF;
     --border:    #F2E3EB;
@@ -98,7 +99,7 @@
   header {
     background: var(--blue);
     padding: 0 32px;
-    height: 62px;
+    height: var(--hdr-h);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -285,7 +286,8 @@
   /* ── MAIN ── */
   main {
     padding: 32px 36px;
-    overflow: auto;
+    overflow-x: clip;
+    min-width: 0;
   }
   .student-header {
     display: flex;
@@ -1566,6 +1568,85 @@
     .dash-stats-row { grid-template-columns: 1fr 1fr; }
   }
 
+
+  /* ── MOBILE / TABLET ── */
+  .bottom-nav, .drawer-backdrop, .drawer-grip, .ag-wrap { display: none; }
+  .tabs { position: sticky; top: var(--hdr-h); z-index: 60; background: var(--bg); overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-top: 6px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { white-space: nowrap; flex-shrink: 0; }
+
+  .ag-pills { display: flex; gap: 6px; margin-bottom: 12px; }
+  .ag-pill { flex: 1; border: 1.5px solid var(--border); background: var(--surface); border-radius: 12px; padding: 8px 0 6px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; }
+  .ag-pill small { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 10px; opacity: .8; }
+  .ag-pill.today { border-color: var(--indigo); }
+  .ag-pill.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+  .ag-title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 15px; margin: 4px 2px 10px; }
+  .ag-item { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; box-shadow: var(--shadow); border-left: 6px solid var(--c, var(--indigo)); }
+  .ag-time { display: flex; flex-direction: column; min-width: 46px; font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .ag-time b { font-size: 15px; color: var(--text); font-family: 'Montserrat', sans-serif; }
+  .ag-body { flex: 1; min-width: 0; cursor: pointer; padding: 4px 0; }
+  .ag-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ag-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .ag-check { display: flex; flex-direction: column; align-items: center; gap: 3px; border: none; background: none; font-size: 10px; font-weight: 600; color: var(--muted); cursor: pointer; padding: 4px 6px; min-width: 54px; font-family: 'Inter', sans-serif; }
+  .ag-box { width: 28px; height: 28px; border: 2px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; background: var(--surface); }
+  .ag-check.checked .ag-box { background: var(--green); border-color: var(--green); }
+  .ag-check.checked .ag-box::after { content: '✓'; font-weight: 700; }
+  .ag-item.ag-break { background: rgba(120,110,125,.14); border-left-color: #9a8f9e; box-shadow: none; }
+  .ag-empty { text-align: center; color: var(--muted); padding: 36px 0; font-size: 14px; }
+
+  @media (max-width: 820px) {
+    :root { --hdr-h: 52px; }
+    header { padding: 0 10px 0 14px; }
+    .logo { font-size: 16px; }
+    .header-date, #navHome, #navSchedule { display: none; }
+    .app { grid-template-columns: 1fr; min-height: calc(100vh - var(--hdr-h)); }
+    main { padding: 16px 14px calc(88px + env(safe-area-inset-bottom)); }
+    .tabs { margin: 0 -14px 18px; padding: 6px 14px 0; }
+    .tab-btn { padding: 12px 14px; font-size: 14px; }
+
+    .bottom-nav { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 140; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -2px 12px rgba(122,74,92,.12); padding-bottom: env(safe-area-inset-bottom); }
+    .bottom-nav button { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 7px; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; min-height: 56px; }
+    .bottom-nav button span { font-size: 21px; line-height: 1; }
+    .bottom-nav button.nav-active { color: var(--indigo); }
+
+    aside { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 160; max-height: 78vh; overflow-y: auto; border-right: none; border-radius: 20px 20px 0 0; padding: 10px 14px calc(18px + env(safe-area-inset-bottom)); transform: translateY(105%); transition: transform .25s ease; box-shadow: 0 -8px 30px rgba(0,0,0,.2); -webkit-overflow-scrolling: touch; }
+    body.drawer-open aside { transform: translateY(0); }
+    .drawer-grip { display: block; width: 44px; height: 5px; border-radius: 3px; background: var(--border); margin: 0 auto 10px; flex-shrink: 0; }
+    .drawer-backdrop { display: block; position: fixed; inset: 0; background: rgba(20,12,16,.45); z-index: 150; opacity: 0; pointer-events: none; transition: opacity .25s; }
+    body.drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
+    .student-card { padding: 12px; min-height: 60px; }
+
+    .modal { padding: 22px 18px; max-width: calc(100vw - 24px); max-height: 90vh; overflow-y: auto; }
+    .report-modal { padding: 20px 16px; }
+    .report-date-row { flex-wrap: wrap; }
+    .report-date-row input { width: 100%; }
+    input, select, textarea { font-size: 16px; }
+    .student-header { gap: 12px; }
+    .student-header h1 { font-size: 20px; }
+    .student-header-actions { margin-left: 0; width: 100%; }
+    .btn-edit-item, .btn-delete-item { min-width: 36px; min-height: 36px; }
+    .hw-main-line { display: grid !important; grid-template-columns: auto 1fr auto auto; gap: 8px 10px; align-items: start; }
+    .hw-main-line > .hw-badge { grid-column: 1; grid-row: 1; }
+    .hw-main-line > .hw-text { grid-column: 2; grid-row: 1; min-width: 0; overflow-wrap: anywhere; }
+    .hw-main-line > .btn-remove-item { grid-column: 4; grid-row: 1; }
+    .hw-main-line > .hw-due { grid-column: 1 / 3; grid-row: 2; }
+    .hw-main-line > .btn-attach { grid-column: 3 / 5; grid-row: 2; justify-self: end; min-height: 34px; }
+    .sg-lesson { flex-direction: column; align-items: flex-start; gap: 2px; padding: 4px 6px; }
+    .sg-lesson-name { flex: none; width: 100%; font-size: 12px; padding-right: 20px; }
+    .sg-lesson .sg-prep-check { position: absolute; top: 4px; right: 4px; }
+    .topic-row { display: grid; grid-template-columns: auto 1fr auto auto; align-items: start; gap: 8px 10px; }
+    .topic-row > .topic-check { grid-column: 1; grid-row: 1; margin-top: 2px; }
+    .topic-row > .topic-text { grid-column: 2; grid-row: 1; min-width: 0; overflow-wrap: anywhere; }
+    .topic-row > .btn-edit-item { grid-column: 3; grid-row: 1; }
+    .topic-row > .btn-remove-item { grid-column: 4; grid-row: 1; }
+    .topic-row > .topic-date-wrap { grid-column: 2 / -1; grid-row: 2; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+  }
+  @media (max-width: 700px) {
+    .schedule-grid-wrap, .schedule-legend { display: none; }
+    .ag-wrap { display: block; }
+    .schedule-view h2 { font-size: 18px; }
+  }
+
   /* ── REPORT MODAL ── */
   .report-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:500; align-items:center; justify-content:center; }
   .report-modal-overlay.open { display:flex; }
@@ -1645,14 +1726,22 @@
 
 <div class="app">
   <aside>
+    <div class="drawer-grip"></div>
     <div class="sidebar-title">Ученики</div>
     <div id="studentList"></div>
-    <button class="btn-add-student" onclick="openAddStudentModal()">+ Добавить ученика</button>
+    <button class="btn-add-student" onclick="closeStudentsDrawer();openAddStudentModal()">+ Добавить ученика</button>
   </aside>
 
   <main id="mainContent">
   </main>
 </div>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button id="bnHome" onclick="showDashboard()"><span>🏠</span>Главная</button>
+  <button id="bnSchedule" onclick="showScheduleView()"><span>📅</span>Расписание</button>
+  <button id="bnStudents" onclick="toggleStudentsDrawer()"><span>👥</span>Ученики</button>
+</nav>
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeStudentsDrawer()"></div>
 
 <!-- LIGHTBOX -->
 <div class="lightbox hidden" id="lightbox" onclick="closeLightbox()">
@@ -2072,7 +2161,15 @@ function setNavActive(id) {
     const btn = document.getElementById(btnId);
     if (btn) btn.classList.toggle('nav-active', btnId === id);
   });
+  const bn = {bnHome: id === 'navHome', bnSchedule: id === 'navSchedule', bnStudents: id === null};
+  Object.keys(bn).forEach(k => { const b = document.getElementById(k); if (b) b.classList.toggle('nav-active', bn[k]); });
+  closeStudentsDrawer();
+  window.scrollTo(0, 0);
 }
+function toggleStudentsDrawer() { document.body.classList.toggle('drawer-open'); }
+function closeStudentsDrawer() { document.body.classList.remove('drawer-open'); }
+let schedMobDay = null;
+function setSchedMobDay(i) { schedMobDay = i; renderScheduleView(); }
 
 function selectStudent(id) {
   state.activeId = id;
@@ -2155,7 +2252,7 @@ function renderScheduleView() {
           const isPrepped = getPrepState(prepKey);
           rowsHtml += `
             <div class="sg-lesson" style="background:${darkenColor(s.color)};height:${heightPx}px">
-              <div class="sg-prep-check ${isPrepped ? 'checked' : ''}"
+              <div class="sg-prep-check ${isPrepped ? 'checked' : ''}" data-prep="${prepKey}"
                 title="${isPrepped ? 'Материал готов' : 'Отметить как подготовлено'}"
                 onclick="togglePrep('${prepKey}',this)"></div>
               <div class="sg-lesson-name" onclick="selectStudent('${s.id}')">${esc(s.name)}</div>
@@ -2174,6 +2271,35 @@ function renderScheduleView() {
       rowsHtml += `</div>`;
     });
   });
+
+  // Mobile agenda (one day as a list)
+  const FULL_DAYS = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+  const agDay = (schedMobDay === null) ? todayIdx : schedMobDay;
+  const addMin = (t, d) => { const [hh, mm] = t.split(':').map(Number); const tot = hh*60+mm+d; return Math.floor(tot/60) + ':' + String(tot%60).padStart(2,'0'); };
+  const agItems = lessonsByDay[agDay].map(l => ({ t: l.time, kind: 'l', l }))
+    .concat((state.breaks || []).filter(b => b.day === DAYS[agDay] && b.time).map(b => ({ t: b.time, kind: 'b', b })));
+  const tmin = t => { const [hh, mm] = t.split(':').map(Number); return hh*60+mm; };
+  agItems.sort((a, b) => tmin(a.t) - tmin(b.t));
+  const agHtml = agItems.map(it => {
+    if (it.kind === 'b') {
+      const b = it.b, d = b.duration || 60;
+      return `<div class="ag-item ag-break"><div class="ag-time"><b>${esc(b.time)}</b><span>${addMin(b.time, d)}</span></div>
+        <div class="ag-body" style="cursor:default"><div class="ag-name">${esc(b.label || 'Перерыв')}</div><div class="ag-sub">${d} мин</div></div></div>`;
+    }
+    const { student: s, time, duration } = it.l;
+    const pk = prepKey_(s.id, agDay, time);
+    const on = getPrepState(pk);
+    return `<div class="ag-item" style="--c:${darkenColor(s.color)}">
+      <div class="ag-time"><b>${esc(time)}</b><span>${addMin(time, duration)}</span></div>
+      <div class="ag-body" onclick="selectStudent('${s.id}')"><div class="ag-name">${esc(s.name)}</div><div class="ag-sub">${duration} мин${s.subject ? ' · ' + esc(s.subject) : ''}</div></div>
+      <button class="ag-check ${on ? 'checked' : ''}" data-prep="${pk}" onclick="togglePrep('${pk}',this)"><span class="ag-box"></span>материал</button>
+    </div>`;
+  }).join('');
+  const agendaBlock = `<div class="ag-wrap">
+    <div class="ag-pills">${DAYS.map((d, i) => `<button class="ag-pill ${i === agDay ? 'active' : ''} ${i === todayIdx ? 'today' : ''}" onclick="setSchedMobDay(${i})">${d}<small>${lessonsByDay[i].length || '·'}</small></button>`).join('')}</div>
+    <div class="ag-title">${FULL_DAYS[agDay]}${agDay === todayIdx ? ' · сегодня' : ''}</div>
+    ${agHtml || '<div class="ag-empty">В этот день занятий нет</div>'}
+  </div>`;
 
   // Legend
   const hasStudentsWithSchedule = state.students.some(s => normalizeSchedule(s.schedule || {}).length > 0);
@@ -2200,6 +2326,7 @@ function renderScheduleView() {
             Пока ни у одного ученика не задано расписание.
             Откройте карточку ученика и задайте расписание — оно появится здесь автоматически.
           </div>`}
+      ${agendaBlock}
       <div class="schedule-grid-wrap">
         <div class="schedule-grid" style="--cell-h:${CELL_H}px">
           <div class="sg-corner"></div>
@@ -2303,6 +2430,8 @@ function togglePrep(key, el) {
   } catch(e) {}
   el.classList.toggle('checked', isNowChecked);
   el.title = isNowChecked ? 'Материал готов' : 'Отметить как подготовлено';
+  // keep grid and mobile list in sync
+  document.querySelectorAll('[data-prep="' + key + '"]').forEach(o => o.classList.toggle('checked', isNowChecked));
 }
 
 function resetAllPrep() {
@@ -2311,7 +2440,7 @@ function resetAllPrep() {
     keys.forEach(k => localStorage.removeItem(k));
   } catch(e) {}
   // Re-render only the checkboxes without full re-render for smoothness
-  document.querySelectorAll('.sg-prep-check').forEach(el => {
+  document.querySelectorAll('.sg-prep-check, .ag-check').forEach(el => {
     el.classList.remove('checked');
     el.title = 'Отметить как подготовлено';
   });
@@ -2642,6 +2771,8 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
+  const ab = document.querySelector('.tab-btn.active');
+  if (ab && ab.scrollIntoView) ab.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
 }
 
 // ─── TOPICS ──────────────────────────────────────────────────────────────────
