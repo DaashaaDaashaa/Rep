@@ -1569,6 +1569,30 @@
   }
 
 
+
+  /* ── QUICK LINKS ── */
+  .ql-section { margin-top: 28px; }
+  .ql-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .ql-head .dash-section-title { margin-bottom:0; }
+  .ql-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:10px; }
+  .ql-card { position:relative; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:12px 14px; display:flex; flex-direction:column; gap:3px; min-width:0; transition:border-color .15s, box-shadow .15s; }
+  .ql-card:hover { border-color:var(--indigo); box-shadow:var(--shadow); }
+  .ql-link { text-decoration:none; color:inherit; display:block; padding-right:62px; min-height:44px; }
+  .ql-title { font-weight:700; font-size:14px; color:var(--indigo); overflow-wrap:anywhere; }
+  .ql-note { font-size:12.5px; color:var(--text); margin-top:2px; overflow-wrap:anywhere; }
+  .ql-url { font-size:11px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ql-tools { position:absolute; top:6px; right:6px; display:flex; gap:2px; }
+  .ql-tools button { border:none; background:none; cursor:pointer; color:var(--muted); font-size:14px; width:28px; height:28px; border-radius:6px; padding:0; }
+  .ql-tools button:hover { background:var(--indigo-lt); color:var(--indigo); }
+  .ql-form { background:var(--surface); border:1.5px solid var(--indigo); border-radius:var(--radius); padding:14px; margin-bottom:12px; display:grid; gap:8px; }
+  .ql-form input { border:1.5px solid var(--border); border-radius:8px; padding:9px 11px; font-size:14px; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); width:100%; outline:none; }
+  .ql-form input:focus { border-color:var(--indigo); }
+  .ql-form-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .ql-btn { border:none; background:var(--indigo); color:#fff; border-radius:8px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; }
+  .ql-btn.ghost { background:none; color:var(--muted); border:1.5px solid var(--border); }
+  .ql-err { color:var(--red); font-size:12px; }
+  .ql-empty { color:var(--muted); font-size:13px; padding:10px 2px; }
+
   /* ── MOBILE / TABLET ── */
   .bottom-nav, .drawer-backdrop, .drawer-grip, .ag-wrap { display: none; }
   .tabs { position: sticky; top: var(--hdr-h); z-index: 60; background: var(--bg); overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-top: 6px; }
@@ -1900,6 +1924,7 @@ let state = {
 let activeTab = 'topics';
 let _reportStudentId = null;
 let _reportMode = 'general';
+let _qlEdit = null;   // ссылки: null | 'new' | id редактируемой
 
 function load() {
   try {
@@ -1908,6 +1933,7 @@ function load() {
       state = JSON.parse(raw);
       if (!('templates' in state)) state.templates = [];
       if (!('breaks' in state)) state.breaks = [];
+      if (!Array.isArray(state.quickLinks)) state.quickLinks = [];
       migrateBreakStudents(state);
       if (!('view' in state)) state.view = state.activeId ? 'student' : 'dashboard';
       // Migrate old topic format: {date: "дд.мм"} → {planDate:'', doneDate:''}
@@ -1962,6 +1988,7 @@ function migrateBreakStudents(st) {
 function migrateState(loaded) {
   if (!('templates' in loaded)) loaded.templates = [];
   if (!('breaks' in loaded)) loaded.breaks = [];
+  if (!Array.isArray(loaded.quickLinks)) loaded.quickLinks = [];
   if (!('view' in loaded)) loaded.view = loaded.activeId ? 'student' : 'dashboard';
   migrateBreakStudents(loaded);
   (loaded.students || []).forEach(s => {
@@ -2447,6 +2474,94 @@ function resetAllPrep() {
 }
 
 // ─── DASHBOARD ──────────────────────────────────────────────────────────────
+
+// ─── QUICK LINKS (мои ссылки на сервисы) ─────────────────────────────────────
+
+function qlNormalizeUrl(u) {
+  u = (u || '').trim();
+  if (!u) return '';
+  if (/^(https?:|mailto:|tel:|tg:)/i.test(u)) return u;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(u) && !/^[a-z0-9.-]+:\d+/i.test(u)) return '';   // javascript: и прочее не пускаем
+  return 'https://' + u.replace(/^\/+/, '');
+}
+function qlHost(u) {
+  try { return new URL(u).host.replace(/^www\./, '') || u; } catch (e) { return u; }
+}
+function renderQuickLinks() {
+  const box = document.getElementById('quickLinks');
+  if (!box) return;
+  const list = state.quickLinks || [];
+  const cur = _qlEdit && _qlEdit !== 'new' ? list.find(l => l.id === _qlEdit) : null;
+  const form = _qlEdit ? `
+    <div class="ql-form">
+      <input id="qlTitle" placeholder="Название сервиса (например, Zoom, Google Диск)" value="${cur ? esc(cur.title) : ''}" maxlength="80">
+      <input id="qlUrl" placeholder="Ссылка (https://…)" value="${cur ? esc(cur.url) : ''}" inputmode="url" autocapitalize="off" autocorrect="off">
+      <input id="qlNote" placeholder="Подпись: что это и зачем (например, «Материалы 7 класса»)" value="${cur ? esc(cur.note || '') : ''}" maxlength="160">
+      <div class="ql-err" id="qlErr"></div>
+      <div class="ql-form-actions">
+        <button class="ql-btn" onclick="qlSave()">${cur ? 'Сохранить' : 'Добавить'}</button>
+        <button class="ql-btn ghost" onclick="qlCancel()">Отмена</button>
+      </div>
+    </div>` : '';
+  const cards = list.map((l, i) => `
+    <div class="ql-card">
+      <a class="ql-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="ql-title">${esc(l.title)}</div>
+        ${l.note ? `<div class="ql-note">${esc(l.note)}</div>` : ''}
+        <div class="ql-url">${esc(qlHost(l.url))}</div>
+      </a>
+      <div class="ql-tools">
+        ${i > 0 ? `<button title="Выше" onclick="qlMove('${l.id}',-1)">↑</button>` : ''}
+        ${i < list.length - 1 ? `<button title="Ниже" onclick="qlMove('${l.id}',1)">↓</button>` : ''}
+        <button title="Изменить" onclick="qlStartEdit('${l.id}')">✎</button>
+        <button title="Удалить" onclick="qlDelete('${l.id}')">×</button>
+      </div>
+    </div>`).join('');
+  box.innerHTML = `
+    <div class="ql-head">
+      <div class="dash-section-title">🔗 Мои ссылки</div>
+      ${_qlEdit ? '' : '<button class="btn-export" onclick="qlStartEdit(\'new\')">+ Добавить ссылку</button>'}
+    </div>
+    ${form}
+    ${list.length ? `<div class="ql-grid">${cards}</div>` : (_qlEdit ? '' : '<div class="ql-empty">Здесь можно собрать ссылки на все рабочие сервисы с подписями — что и где лежит.</div>')}`;
+  if (_qlEdit) { const t = document.getElementById('qlTitle'); if (t && !cur) t.focus(); }
+}
+function qlStartEdit(id) { _qlEdit = id; renderQuickLinks(); }
+function qlCancel() { _qlEdit = null; renderQuickLinks(); }
+function qlSave() {
+  const title = document.getElementById('qlTitle').value.trim();
+  const rawUrl = document.getElementById('qlUrl').value;
+  const note = document.getElementById('qlNote').value.trim();
+  const err = document.getElementById('qlErr');
+  const url = qlNormalizeUrl(rawUrl);
+  if (!title) { err.textContent = 'Укажи название'; return; }
+  if (!url) { err.textContent = 'Укажи корректную ссылку'; return; }
+  if (!Array.isArray(state.quickLinks)) state.quickLinks = [];
+  if (_qlEdit && _qlEdit !== 'new') {
+    const l = state.quickLinks.find(x => x.id === _qlEdit);
+    if (l) { l.title = title; l.url = url; l.note = note; }
+  } else {
+    state.quickLinks.push({ id: 'ql_' + uid(), title, url, note });
+  }
+  _qlEdit = null;
+  save();
+  renderQuickLinks();
+}
+function qlDelete(id) {
+  const l = (state.quickLinks || []).find(x => x.id === id);
+  if (!l || !confirm('Удалить ссылку «' + l.title + '»?')) return;
+  state.quickLinks = state.quickLinks.filter(x => x.id !== id);
+  save();
+  renderQuickLinks();
+}
+function qlMove(id, dir) {
+  const a = state.quickLinks, i = a.findIndex(x => x.id === id), j = i + dir;
+  if (i < 0 || j < 0 || j >= a.length) return;
+  [a[i], a[j]] = [a[j], a[i]];
+  save();
+  renderQuickLinks();
+}
+
 function renderDashboard() {
   const main = document.getElementById('mainContent');
   const today = todayStr();
@@ -2457,7 +2572,9 @@ function renderDashboard() {
         <div class="big-icon">🎓</div>
         <h2>Добавьте первого ученика</h2>
         <p>Нажмите «+ Добавить ученика» в боковой панели, чтобы начать</p>
-      </div>`;
+      </div>
+      <div class="ql-section" id="quickLinks"></div>`;
+    renderQuickLinks();
     return;
   }
 
@@ -2557,10 +2674,12 @@ function renderDashboard() {
       </div>
     </div>
 
+    <div class="ql-section" id="quickLinks"></div>
+
     <details class="backup-box" id="backupBox">
       <summary>⚙️ Резервная копия данных</summary>
       <div class="backup-body">
-        <div class="backup-hint">Копия — это один файл со всеми учениками, темами, оплатами, результатами и перерывами. Он нужен на случай проблем с облаком или если вы очистите данные браузера.</div>
+        <div class="backup-hint">Копия — это один файл со всеми учениками, темами, оплатами, результатами, перерывами и ссылками. Он нужен на случай проблем с облаком или если вы очистите данные браузера.</div>
         <div class="backup-actions">
           <button class="btn-export" onclick="downloadBackup()">⬇ Скачать резервную копию</button>
           <button class="btn-export" onclick="pickBackupFile()">⬆ Загрузить из файла</button>
@@ -2571,6 +2690,7 @@ function renderDashboard() {
       </div>
     </details>
   `;
+  renderQuickLinks();
 }
 
 // ─── BACKUP / RESTORE ──────────────────────────────────────────────────────
@@ -2587,7 +2707,8 @@ function backupCounts(st) {
     students: students.length,
     topics: students.reduce((a, s) => a + (s.topics || []).length, 0),
     results: students.reduce((a, s) => a + (s.results || []).length, 0),
-    breaks: (st.breaks || []).length
+    breaks: (st.breaks || []).length,
+    links: (st.quickLinks || []).length
   };
 }
 function downloadBackup() {
