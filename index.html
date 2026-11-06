@@ -1925,6 +1925,14 @@ let activeTab = 'topics';
 let _reportStudentId = null;
 let _reportMode = 'general';
 let _qlEdit = null;   // ссылки: null | 'new' | id редактируемой
+let schedMobDay = null;   // расписание на телефоне: выбранный день (null = сегодня)
+let _brkDays = [];
+let _pendingBackup = null;
+let _attachingHWId = null;
+let _pendingNewImages = []; // base64 for the *next* task being created
+let _pendingResultImages = [];
+let _attachingResultId = null;
+let editingStudentId = null;
 
 function load() {
   try {
@@ -1934,6 +1942,8 @@ function load() {
       if (!('templates' in state)) state.templates = [];
       if (!('breaks' in state)) state.breaks = [];
       if (!Array.isArray(state.quickLinks)) state.quickLinks = [];
+      if (!state.prep || typeof state.prep !== 'object' || Array.isArray(state.prep)) state.prep = {};
+      if (absorbLegacyPrep()) { saveLocal(); setDirty(true); }   // старые отметки — в общие данные
       migrateBreakStudents(state);
       if (!('view' in state)) state.view = state.activeId ? 'student' : 'dashboard';
       // Migrate old topic format: {date: "дд.мм"} → {planDate:'', doneDate:''}
@@ -1989,6 +1999,7 @@ function migrateState(loaded) {
   if (!('templates' in loaded)) loaded.templates = [];
   if (!('breaks' in loaded)) loaded.breaks = [];
   if (!Array.isArray(loaded.quickLinks)) loaded.quickLinks = [];
+  if (!loaded.prep || typeof loaded.prep !== 'object' || Array.isArray(loaded.prep)) loaded.prep = {};
   if (!('view' in loaded)) loaded.view = loaded.activeId ? 'student' : 'dashboard';
   migrateBreakStudents(loaded);
   (loaded.students || []).forEach(s => {
@@ -2054,13 +2065,15 @@ function loadFromCloud() {
     const cloudHasData = record && Array.isArray(record.students) && record.students.length > 0;
     if (cloudHasData && !isDirty()) {
       state = migrateState(record);
+      _lastSyncedKey = syncKey();            // ключ облачной версии — до добавления старых локальных отметок
+      const absorbedPrep = absorbLegacyPrep();
       saveLocal();
-      _lastSyncedKey = syncKey();
       renderSidebar();
       if (state.view === 'student' && state.activeId) renderMain();
       else if (state.view === 'schedule') { setNavActive('navSchedule'); renderScheduleView(); }
       else { setNavActive('navHome'); showDashboard(); }
       setCloudStatus('ok');
+      if (absorbedPrep) save();              // старые отметки «подготовлено» с этого устройства уедут в облако
     } else {
       // облако пустое, либо на этом устройстве есть ещё не отправленные правки — главнее локальные данные
       saveToCloud();
@@ -2195,7 +2208,6 @@ function setNavActive(id) {
 }
 function toggleStudentsDrawer() { document.body.classList.toggle('drawer-open'); }
 function closeStudentsDrawer() { document.body.classList.remove('drawer-open'); }
-let schedMobDay = null;
 function setSchedMobDay(i) { schedMobDay = i; renderScheduleView(); }
 
 function selectStudent(id) {
@@ -2367,7 +2379,6 @@ function renderScheduleView() {
 }
 
 // ─── BREAKS ───────────────────────────────────────────────────────────────────
-let _brkDays = [];
 function renderBreaksPanel() {
   const el = document.getElementById('breaksPanel');
   if (!el) return;
@@ -2445,16 +2456,30 @@ function prepKey_(studentId, dayIdx, time) {
   return `prep_${studentId}_${dayIdx}_${time}`;
 }
 
+// Отметки хранятся в state.prep и синхронизируются через облако вместе со всеми данными.
+// absorbLegacyPrep переносит отметки старого формата (отдельные ключи prep_* в localStorage) в state.prep.
+function absorbLegacyPrep() {
+  let found = false;
+  try {
+    if (!state.prep || typeof state.prep !== 'object') state.prep = {};
+    Object.keys(localStorage).filter(k => k.startsWith('prep_')).forEach(k => {
+      if (localStorage.getItem(k) === '1') { state.prep[k] = true; found = true; }
+      localStorage.removeItem(k);
+    });
+  } catch(e) {}
+  return found;
+}
+
 function getPrepState(key) {
-  try { return localStorage.getItem(key) === '1'; } catch(e) { return false; }
+  return !!(state.prep && state.prep[key]);
 }
 
 function togglePrep(key, el) {
   const isNowChecked = !el.classList.contains('checked');
-  try {
-    if (isNowChecked) localStorage.setItem(key, '1');
-    else localStorage.removeItem(key);
-  } catch(e) {}
+  if (!state.prep) state.prep = {};
+  if (isNowChecked) state.prep[key] = true;
+  else delete state.prep[key];
+  save();
   el.classList.toggle('checked', isNowChecked);
   el.title = isNowChecked ? 'Материал готов' : 'Отметить как подготовлено';
   // keep grid and mobile list in sync
@@ -2462,10 +2487,8 @@ function togglePrep(key, el) {
 }
 
 function resetAllPrep() {
-  try {
-    const keys = Object.keys(localStorage).filter(k => k.startsWith('prep_'));
-    keys.forEach(k => localStorage.removeItem(k));
-  } catch(e) {}
+  state.prep = {};
+  save();
   // Re-render only the checkboxes without full re-render for smoothness
   document.querySelectorAll('.sg-prep-check, .ag-check').forEach(el => {
     el.classList.remove('checked');
@@ -2694,7 +2717,6 @@ function renderDashboard() {
 }
 
 // ─── BACKUP / RESTORE ──────────────────────────────────────────────────────
-let _pendingBackup = null;
 
 function setBackupMsg(text, kind) {
   const box = document.getElementById('backupBox'); if (box) box.open = true;
@@ -3395,8 +3417,6 @@ function renderHomeworkPanel(s) {
 }
 
 // ── Image helpers ──────────────────────────────────────────────────────────────
-let _attachingHWId = null;
-let _pendingNewImages = []; // base64 for the *next* task being created
 
 function triggerHWImageUpload(hwId) {
   _attachingHWId = hwId;
@@ -3903,8 +3923,6 @@ function renderResultsPanel(s) {
       onchange="handleResultAttachFiles(this.files)">`;
 }
 
-let _pendingResultImages = [];
-let _attachingResultId = null;
 
 function addResult() {
   const title = document.getElementById('newResultTitle')?.value.trim();
@@ -4096,7 +4114,6 @@ function removeLink(id) {
 }
 
 // ─── STUDENT MODAL ───────────────────────────────────────────────────────────
-let editingStudentId = null;
 let selectedColor = COLORS[0];
 
 function openAddStudentModal() {
